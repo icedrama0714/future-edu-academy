@@ -97,6 +97,14 @@ module.exports = async function handler(req, res) {
     });
 
     if (!openaiResponse.ok) {
+      let errorCode = `http_${openaiResponse.status}`;
+      try {
+        const errorData = await openaiResponse.json();
+        errorCode = errorData?.error?.code || errorData?.error?.type || errorCode;
+      } catch (error) {
+        // The status code is enough for the private server log.
+      }
+      console.warn("Learning report AI fallback", { status: openaiResponse.status, code: errorCode });
       return jsonResponse(res, 200, { report: safeText(payload.baseDraft), fallback: true });
     }
 
@@ -104,6 +112,7 @@ module.exports = async function handler(req, res) {
     const report = extractResponseText(data) || safeText(payload.baseDraft);
     return jsonResponse(res, 200, { report });
   } catch (error) {
+    console.warn("Learning report AI fallback", { code: error?.name || "request_failed" });
     return jsonResponse(res, 200, { report: safeText(payload.baseDraft), fallback: true });
   }
 };
