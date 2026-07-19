@@ -7466,14 +7466,14 @@ function buildLearningReportDraft(student, start, end, records, reportType = "mo
   const recordedSubjects = [...new Set(records.map((record) => record.subject).filter(Boolean))];
   const units = [...new Set(records.map((record) => record.unit).filter(Boolean))].slice(0, 3);
   const latestRecord = records[records.length - 1] || {};
-  const latestNote = compactText(latestRecord.text || latestRecord.unit || "", 65);
+  const latestNote = compactText(latestRecord.text || latestRecord.unit || "", 110);
   const mainUnderstanding = mostCommonValue(records, "understanding") || "확인 중";
   const mainAttitude = mostCommonValue(records, "attitude") || "확인 중";
   const learningFocus = units.length ? units.join(", ") : latestNote || "저장된 학습내용";
   const subjects = recordedSubjects.join(", ") || subjectNames;
-  const noteSentence = latestNote ? ` 최근 기록에는 ${latestNote.replace(/[.!?]+$/, "")} 내용이 남아 있습니다.` : "";
+  const noteSentence = latestNote ? ` 최근 기록에서는 ${latestNote.replace(/[.!?]+$/, "")} 모습이 확인되었습니다.` : "";
 
-  return `${title}\n\n이번 기간에는 ${subjects}에서 ${learningFocus}를 학습했습니다. 저장된 기록에서 이해도는 ${mainUnderstanding}, 수업 태도는 ${mainAttitude}로 확인됩니다.${noteSentence}\n\n잘 이해한 부분은 자신의 말로 설명하며 강점으로 굳히고, 어려운 부분은 짧게 나누어 복습한 뒤 스스로 점검하는 습관을 이어가겠습니다.`;
+  return `${title}\n\n이번 기간에는 ${subjects}에서 ${learningFocus} 내용을 학습했습니다. 저장된 기록에서 이해도는 ${mainUnderstanding}, 수업 태도는 ${mainAttitude} 상태로 확인됩니다.${noteSentence}\n\n잘 이해한 부분은 자신의 말로 설명하며 강점으로 굳히고, 어려운 부분은 짧게 나누어 복습한 뒤 스스로 점검하는 습관을 이어가겠습니다.`;
 }
 
 function learningReportContext(student, start, end, records, baseDraft, reportType = "monthly") {
