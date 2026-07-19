@@ -425,6 +425,15 @@
                 <div class="learning-report-panel">
                   <div class="form-grid">
                     <label>
+                      보고서 종류
+                      <select id="learningReportType">
+                        <option value="monthly">월간 학습보고서</option>
+                        <option value="counseling">상담용 보고서</option>
+                        <option value="test">시험 결과보고서</option>
+                        <option value="semester">학기말 종합보고서</option>
+                      </select>
+                    </label>
+                    <label>
                       리포트 기간
                       <select id="learningReportPeriod">
                         <option value="month">이번 달</option>
@@ -442,12 +451,13 @@
                     </label>
                   </div>
                   <div class="feedback-actions learning-report-actions">
-                    <button class="ghost-button" id="generateLearningReportBtn" type="button">리포트 초안 만들기</button>
+                    <button class="ghost-button" id="generateLearningReportBtn" type="button">AI 학습리포트 만들기</button>
                     <button class="mini-button" id="previewLearningReportBtn" type="button">미리보기</button>
                     <button class="mini-button" id="printLearningReportBtn" type="button">프린트</button>
                     <button class="mini-button" id="copyLearningReportBtn" type="button">복사</button>
                   </div>
-                  <textarea id="learningReportText" rows="9" placeholder="학생을 선택한 뒤 리포트 초안 만들기를 눌러주세요."></textarea>
+                  <textarea id="learningReportText" rows="9" placeholder="학생을 선택한 뒤 AI 학습리포트 만들기를 눌러주세요."></textarea>
+                  <small class="learning-report-count" id="learningReportCharCount">권장 200~300자 · 현재 0자</small>
                   <div class="learning-report-preview" id="learningReportPreview"></div>
                 </div>
               </fieldset>
