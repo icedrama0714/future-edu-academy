@@ -1,0 +1,1506 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>미래엔 에듀 영수학원 관리</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar" aria-label="관리 메뉴">
+        <button class="sidebar-title sidebar-home-button" id="homeButton" type="button" aria-label="첫 화면으로 이동">
+          <img class="sidebar-logo-mark" src="./assets/logo-characters.png" alt="" />
+          <div>
+            <strong>미래엔 에듀</strong>
+            <span>학원관리</span>
+          </div>
+        </button>
+        <nav class="side-nav">
+          <details class="nav-folder" open>
+            <summary>학원운영</summary>
+            <button type="button" data-view="students">
+              <strong>학생관리</strong>
+            </button>
+            <button type="button" data-view="learning">
+              <strong>학습관리</strong>
+            </button>
+            <button type="button" data-view="attendance">
+              <strong>등원관리</strong>
+            </button>
+            <button type="button" data-view="checkin">
+              <strong>출석체크</strong>
+            </button>
+          </details>
+          <details class="nav-folder">
+            <summary>관리/설정</summary>
+            <button type="button" data-view="payments">
+              <strong>납부관리</strong>
+            </button>
+            <button type="button" data-view="finance">
+              <strong>매출관리</strong>
+            </button>
+            <button type="button" data-view="tuition">
+              <strong>교육비 기준표</strong>
+            </button>
+            <button type="button" data-view="books">
+              <strong>교재관리</strong>
+            </button>
+            <button type="button" data-view="staff">
+              <strong>직원관리</strong>
+            </button>
+            <button type="button" data-view="kakao">
+              <strong>알림톡</strong>
+            </button>
+            <button type="button" data-view="archive">
+              <strong>자료보관</strong>
+            </button>
+          </details>
+        </nav>
+      </aside>
+
+      <div class="app-shell">
+        <header class="topbar">
+          <div class="brand">
+            <div>
+              <p class="eyebrow">문해력 기반 학원 운영</p>
+              <h1 id="pageTitle"></h1>
+            </div>
+          </div>
+          <div class="top-actions">
+            <label class="role-control">
+              보기
+              <select id="roleModeSelect">
+                <option value="director">원장</option>
+                <option value="teacher">선생님</option>
+                <option value="desk">데스크</option>
+              </select>
+            </label>
+            <span class="user-chip" id="currentUserChip">미로그인</span>
+            <button class="ghost-button" id="logoutBtn" type="button">로그아웃</button>
+            <button class="primary-button" id="newStudentBtn" type="button">학생 등록</button>
+          </div>
+        </header>
+
+        <section class="view-section active" id="dashboardView" data-view-section="dashboard" aria-label="대시보드">
+          <section class="stats-grid" aria-label="학원 현황">
+            <button class="stat-card-button" id="activeStudentsCard" type="button">
+              <span>재원생</span>
+              <strong id="activeCount">0</strong>
+            </button>
+            <button class="stat-card-button" id="todayAttendanceCard" type="button">
+              <span>등원</span>
+              <strong id="presentCount">0</strong>
+            </button>
+            <button class="stat-card-button" id="monthlyNewCard" type="button">
+              <span id="monthlyNewLabel">당월 신규원생</span>
+              <strong id="monthlyNewCount">0</strong>
+            </button>
+            <button class="stat-card-button" id="monthlyNewSubjectCard" type="button">
+              <span id="monthlyNewSubjectLabel">당월 신규과목</span>
+              <strong id="monthlyNewSubjectCount">0</strong>
+            </button>
+            <button class="stat-card-button" id="monthlyUnpaidCard" type="button">
+              <span>미납</span>
+              <strong id="monthlyTuition">0건</strong>
+            </button>
+          </section>
+
+          <section class="today-shortcuts" aria-label="오늘 확인">
+            <div>
+              <p class="eyebrow">오늘 확인</p>
+              <strong id="todayDateLabel">오늘</strong>
+            </div>
+            <div class="today-shortcut-actions">
+              <button class="today-shortcut-button absent" id="todayAbsentCard" type="button">
+                <span>결석</span>
+                <strong id="todayAbsentCount">0</strong>
+              </button>
+              <button class="today-shortcut-button pause" id="pausedStudentsCard" type="button">
+                <span>휴무</span>
+                <strong id="pausedCount">0</strong>
+              </button>
+              <button class="today-shortcut-button waiting" id="waitingStudentsCard" type="button">
+                <span>대기</span>
+                <strong id="waitingCount">0</strong>
+              </button>
+            </div>
+          </section>
+
+          <div class="dashboard-grid">
+            <section class="dashboard-panel notice-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">공지사항</p>
+                  <h2></h2>
+                </div>
+              </div>
+              <div class="dashboard-list" id="dashboardStudentList"></div>
+              <div class="notice-editor">
+                <input id="noticeId" type="hidden" />
+                <label>
+                  날짜
+                  <input id="noticeDate" type="date" />
+                </label>
+                <label>
+                  제목
+                  <input id="noticeTitle" type="text" placeholder="예: 전달사항" />
+                </label>
+                <label class="wide">
+                  공지내용
+                  <textarea id="noticeText" rows="3" placeholder="원장님 확인사항이나 선생님께 알릴 내용을 적어주세요."></textarea>
+                </label>
+                <div class="notice-actions wide">
+                  <button class="mini-button notice-save-button" id="saveNoticeBtn" type="button">공지 저장</button>
+                </div>
+              </div>
+            </section>
+            <section class="dashboard-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">등원관리</p>
+                  <h2>출첵현황</h2>
+                </div>
+              </div>
+              <div class="dashboard-list" id="dashboardFeedbackList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view-section" id="studentsView" data-view-section="students" aria-label="학생관리">
+          <main class="workspace">
+        <section class="list-panel" aria-label="학생 목록">
+          <div class="filters">
+            <input id="searchInput" type="search" placeholder="학생명, 학교, 학부모, 연락처 검색" />
+            <select id="gradeFilter" aria-label="학년 필터">
+              <option value="">전체 학년</option>
+            </select>
+            <select id="subjectFilter" aria-label="과목 필터">
+              <option value="">전체 과목</option>
+            </select>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>학생</th>
+                  <th>학년</th>
+                  <th>과목</th>
+                  <th>담당</th>
+                  <th>출첵코드</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="studentRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="detail-panel" aria-label="학생 상세">
+          <form id="studentForm">
+            <input id="studentId" type="hidden" />
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">학생 상세</p>
+                <h2 id="formTitle">신규 등록</h2>
+              </div>
+              <button class="mini-danger-button withdraw-button" id="leaveBtn" type="button">퇴회</button>
+            </div>
+
+            <div class="detail-empty" id="studentDetailEmpty">
+              <div class="grade-summary" aria-label="학년별 재원생 인원">
+                <button class="grade-summary-head" id="gradeSummaryAllButton" type="button">
+                  <span>학년별 재원생</span>
+                  <strong id="gradeSummaryTotal">0명</strong>
+                </button>
+                <div class="grade-summary-grid" id="gradeSummaryGrid"></div>
+              </div>
+            </div>
+
+            <div id="studentDetailFields" class="student-detail-fields hidden">
+            <div class="form-grid">
+              <label>
+                학생명
+                <input id="studentName" required autocomplete="off" />
+              </label>
+              <label>
+                학교
+                <input id="school" autocomplete="off" />
+              </label>
+              <label>
+                학년
+                <select id="grade" required></select>
+              </label>
+              <label>
+                학부모 연락처 1
+                <input id="parentPhone" inputmode="tel" placeholder="010-0000-0000" />
+              </label>
+              <label>
+                학생연락처
+                <input id="studentPhone" inputmode="tel" placeholder="010-0000-0000" autocomplete="off" />
+              </label>
+              <label class="parent-contact-extra hidden">
+                학부모 연락처 2
+                <input id="parentPhone2" inputmode="tel" placeholder="010-0000-0000" />
+              </label>
+              <label class="parent-contact-extra hidden">
+                학부모 연락처 3
+                <input id="parentPhone3" inputmode="tel" placeholder="010-0000-0000" />
+              </label>
+              <label class="parent-contact-extra hidden">
+                학부모 연락처 4
+                <input id="parentPhone4" inputmode="tel" placeholder="010-0000-0000" />
+              </label>
+              <div class="parent-contact-actions wide compact-action">
+                <button class="ghost-button" id="addParentContactBtn" type="button">학부모 연락처 추가</button>
+              </div>
+            </div>
+
+            <fieldset>
+              <legend>학습 과목</legend>
+              <div class="subject-grid" id="subjectChecks"></div>
+              <div class="gongpil-subjects hidden" id="gongpilSubjectPanel">
+                <p>공필왕 선택 과목</p>
+                <div class="subject-grid" id="gongpilSubjectChecks"></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="course-history-panel">
+              <legend>수강이력</legend>
+              <div class="course-history-editor">
+                <input id="courseHistoryId" type="hidden" />
+                <label>
+                  날짜
+                  <input id="courseHistoryDate" type="date" />
+                </label>
+                <label>
+                  구분
+                  <select id="courseHistoryAction">
+                    <option>시작</option>
+                    <option>추가</option>
+                    <option>중단</option>
+                  </select>
+                </label>
+                <label>
+                  과목
+                  <select id="courseHistorySubject"></select>
+                </label>
+                <label class="wide">
+                  메모
+                  <input id="courseHistoryMemo" autocomplete="off" placeholder="예: 기존 문해력 수강 중 미래엔 수학 추가" />
+                </label>
+                <div class="course-history-actions wide">
+                  <button class="mini-button" id="addCourseHistoryBtn" type="button">수강이력 추가</button>
+                  <button class="mini-button" id="clearCourseHistoryBtn" type="button">입력 비우기</button>
+                </div>
+              </div>
+              <div class="course-history-list" id="courseHistoryList"></div>
+            </fieldset>
+
+            <div class="form-grid">
+              <label>
+                담당교사
+                <input id="teacher" autocomplete="off" />
+              </label>
+              <label>
+                입회일
+                <input id="joinDate" type="date" />
+              </label>
+              <label>
+                퇴회일
+                <input id="leaveDate" type="date" />
+              </label>
+              <label>
+                상태
+                <select id="enrollmentStatus">
+                  <option>재원</option>
+                  <option>대기</option>
+                  <option>휴원</option>
+                  <option>퇴회</option>
+                </select>
+              </label>
+            </div>
+
+            <fieldset id="attendanceDaysPanel">
+              <legend>등원요일 관리</legend>
+              <div class="weekday-grid" id="attendanceDayChecks"></div>
+              <label class="wide schedule-note-label">
+                요일별 수업과목
+                <textarea id="weeklySubjectSchedule" rows="3" placeholder="예: 월: 미래엔 수학 / 화: 문해력 / 수: 공필왕 국어"></textarea>
+              </label>
+            </fieldset>
+
+            <div class="form-actions">
+              <button class="ghost-button" id="resetBtn" type="button">초기화</button>
+              <button class="primary-button" type="submit">저장</button>
+            </div>
+            </div>
+          </form>
+        </aside>
+          </main>
+        </section>
+
+        <section class="view-section" id="learningView" data-view-section="learning" aria-label="학습관리">
+          <main class="workspace learning-workspace">
+            <section class="list-panel" aria-label="학습관리 학생 선택">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">학습관리</p>
+                  <h2>학생 선택</h2>
+                </div>
+              </div>
+              <div class="compact-search">
+                <input id="learningSearchInput" type="search" placeholder="학생명, 학교, 학년, 과목 검색" />
+              </div>
+              <div class="management-list compact-student-list" id="learningStudentList"></div>
+            </section>
+
+            <aside class="detail-panel" aria-label="학습 상세">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">학습 상세</p>
+                  <h2 id="learningTitle"></h2>
+                </div>
+                <button class="primary-button" id="saveLearningBtn" type="button">학습관리 저장</button>
+              </div>
+
+              <fieldset>
+                <legend>매일 학습 피드백</legend>
+                <div class="feedback-editor">
+                  <input id="feedbackId" type="hidden" />
+                  <label>
+                    기록 날짜
+                    <input id="feedbackDate" type="date" />
+                  </label>
+                  <label>
+                    피드백 과목
+                    <select id="feedbackSubject"></select>
+                  </label>
+                  <label>
+                    교재 / 단원
+                    <input id="feedbackUnit" type="text" placeholder="예: 독해 4단계 3단원" />
+                  </label>
+                  <label>
+                    이해도
+                    <select id="feedbackUnderstanding">
+                      <option>좋음</option>
+                      <option>보통</option>
+                      <option>보완필요</option>
+                    </select>
+                  </label>
+                  <label>
+                    태도
+                    <select id="feedbackAttitude">
+                      <option>집중</option>
+                      <option>보통</option>
+                      <option>확인필요</option>
+                    </select>
+                  </label>
+                  <label>
+                    과제
+                    <input id="feedbackHomework" type="text" placeholder="예: 오답 2문제, 12쪽 읽기" />
+                  </label>
+                  <div class="feedback-recommend-actions wide">
+                    <button class="ghost-button" id="recommendFeedbackBtn" type="button">과목별 피드백 추천</button>
+                  </div>
+                  <label class="wide">
+                    학부모 피드백
+                    <textarea id="feedbackText" rows="4" placeholder="학부모님께 전달할 오늘 학습 내용, 칭찬할 점, 보완할 점"></textarea>
+                  </label>
+                  <label class="wide">
+                    학습 사진
+                    <input id="feedbackPhoto" type="file" accept="image/*" />
+                  </label>
+                  <div class="feedback-preview" id="feedbackPhotoPreview"></div>
+                  <div class="feedback-actions">
+                    <button class="primary-button" id="saveFeedbackBtn" type="button">피드백 저장</button>
+                  </div>
+                </div>
+                <div class="feedback-list" id="feedbackList"></div>
+              </fieldset>
+
+              <fieldset>
+                <legend>학습리포트</legend>
+                <div class="learning-report-panel">
+                  <div class="form-grid">
+                    <label>
+                      리포트 기간
+                      <select id="learningReportPeriod">
+                        <option value="month">이번 달</option>
+                        <option value="week">이번 주</option>
+                        <option value="custom">직접 선택</option>
+                      </select>
+                    </label>
+                    <label>
+                      시작일
+                      <input id="learningReportStart" type="date" />
+                    </label>
+                    <label>
+                      종료일
+                      <input id="learningReportEnd" type="date" />
+                    </label>
+                  </div>
+                  <div class="feedback-actions learning-report-actions">
+                    <button class="ghost-button" id="generateLearningReportBtn" type="button">리포트 초안 만들기</button>
+                    <button class="mini-button" id="previewLearningReportBtn" type="button">미리보기</button>
+                    <button class="mini-button" id="printLearningReportBtn" type="button">프린트</button>
+                    <button class="mini-button" id="copyLearningReportBtn" type="button">복사</button>
+                  </div>
+                  <textarea id="learningReportText" rows="9" placeholder="학생을 선택한 뒤 리포트 초안 만들기를 눌러주세요."></textarea>
+                  <div class="learning-report-preview" id="learningReportPreview"></div>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>교재 관리</legend>
+                <div class="form-grid">
+                  <label class="wide">
+                    현재 학습교재
+                    <textarea id="currentBooks" rows="3" placeholder="예: 초등 문해력 독해 4단계, 중등 수학 개념서"></textarea>
+                  </label>
+                  <label class="wide">
+                    완료된 교재 기록
+                    <textarea id="completedBooks" rows="3" placeholder="완료 날짜와 교재명을 함께 기록"></textarea>
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>상담 및 보강 기록</legend>
+                <div class="form-grid">
+                  <label class="wide">
+                    상담기록
+                    <textarea id="counselingRecords" rows="4" placeholder="상담일, 상담 내용, 후속 조치 기록"></textarea>
+                  </label>
+                  <label class="wide">
+                    보강날짜기록
+                    <textarea id="makeupDateRecords" rows="3" placeholder="예: 2026-07-12 수학 1회 보강"></textarea>
+                  </label>
+                </div>
+              </fieldset>
+
+              <div class="form-grid">
+                <label class="wide">
+                  학습 메모
+                  <textarea id="memo" rows="4"></textarea>
+                </label>
+              </div>
+              <div class="form-actions learning-bottom-actions">
+                <button class="primary-button" id="saveLearningBtnBottom" type="button">학습관리 저장</button>
+              </div>
+            </aside>
+          </main>
+        </section>
+
+        <section class="view-section" id="paymentsView" data-view-section="payments" aria-label="납부관리">
+          <section class="management-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">납부관리</p>
+                <h2>교육비 납부 현황</h2>
+              </div>
+              <button class="payment-revenue-button" id="monthlyRevenueButton" type="button">
+                <span id="monthlyRevenueLabel">당월 총매출</span>
+                <strong id="monthlyRevenueAmount">0원</strong>
+              </button>
+            </div>
+            <div class="payment-archive-actions">
+              <button class="ghost-button" id="exportPaymentBackupBtn" type="button">수납자료 백업</button>
+              <button class="ghost-button" id="importPaymentBackupBtn" type="button">백업 불러오기</button>
+              <button class="ghost-button" id="exportPaymentLedgerBtn" type="button">점검용 엑셀자료</button>
+              <button class="ghost-button" id="showPaymentLedgerBtn" type="button">수납이력 보기</button>
+              <button class="danger-button" id="deleteSelectedPaymentsBtn" type="button">선택 삭제</button>
+              <input id="paymentBackupFile" type="file" accept="application/json" hidden />
+            </div>
+            <details class="payment-entry-panel">
+              <summary>교육비 수납 학생 입력</summary>
+              <div class="payment-entry-grid">
+                <label>
+                  원생명
+                  <input id="payStudentName" type="text" list="paymentStudentOptions" placeholder="수납장부에 표시할 이름" />
+                  <datalist id="paymentStudentOptions"></datalist>
+                </label>
+                <label>
+                  학교
+                  <input id="paySchool" type="text" placeholder="예: 화정초" />
+                </label>
+                <label>
+                  학년
+                  <input id="payGrade" type="text" placeholder="예: 3학년" />
+                </label>
+                <label>
+                  연락처
+                  <input id="payPhone" type="tel" placeholder="010-0000-0000" />
+                </label>
+                <label>
+                  납부상태
+                  <select id="payStatus">
+                    <option>미납</option>
+                    <option>납부완료</option>
+                  </select>
+                </label>
+                <label>
+                  수납 유형
+                  <select id="payPaymentType">
+                    <option>정규 교육비</option>
+                    <option>추가 수강</option>
+                    <option>분납</option>
+                    <option>이월</option>
+                    <option>교재비</option>
+                    <option>환불</option>
+                    <option>기타</option>
+                  </select>
+                </label>
+                <label>
+                  교육비 납부예정일
+                  <input id="payRegistered" type="date" />
+                </label>
+                <label class="wide">
+                  수납명
+                  <input id="payPaymentName" type="text" placeholder="예: 미래엔 수학 주3회, 교재비 포함" />
+                </label>
+                <label>
+                  기본 교육비
+                  <input id="payTuition" type="number" step="1000" min="0" />
+                </label>
+                <label>
+                  할인
+                  <input id="payDiscount" type="number" step="1000" />
+                </label>
+                <label>
+                  납부금액
+                  <input id="payPaidAmount" type="number" step="1000" min="0" />
+                </label>
+                <label>
+                  납부일
+                  <input id="payPaymentDate" type="date" />
+                </label>
+                <label>
+                  납부방법
+                  <select id="payPaymentMethod">
+                    <option value="">선택</option>
+                    <option>카드결제</option>
+                    <option>제로페이</option>
+                    <option>계좌이체</option>
+                    <option>현금</option>
+                  </select>
+                </label>
+                <label class="hidden" id="payCashReceiptDateWrap">
+                  현금영수증 발행일
+                  <input id="payCashReceiptDate" type="date" />
+                </label>
+                <div class="book-fee-editor wide" data-book-fee-editor="standalone">
+                  <div class="book-fee-head">
+                    <button class="mini-button" type="button" data-book-fee-add>교재 추가</button>
+                    <strong>교재비</strong>
+                    <span>합계 <b data-book-fee-total>0원</b></span>
+                  </div>
+                  <div class="book-fee-list" data-book-fee-list>
+                    <div class="book-fee-row">
+                      <label>
+                        교재
+                        <input id="payBookFeeTitle" data-book-title type="text" />
+                      </label>
+                      <label>
+                        금액
+                        <input id="payBookFeeAmount" data-book-amount type="number" step="1000" min="0" />
+                      </label>
+                      <button class="mini-danger-button" type="button" data-book-fee-remove>삭제</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="payment-auto-total wide">
+                  <span>합계 수납금액</span>
+                  <strong id="payCalculatedTotal">0원</strong>
+                  <small>기본 교육비 + 교재비</small>
+                </div>
+                <label class="wide">
+                  메모
+                  <textarea id="payMemo" rows="2" placeholder="할인, 형제, 지인소개, 추가 수납 사유 등을 기록"></textarea>
+                </label>
+                <div class="payment-save-row wide">
+                  <button class="primary-button" id="saveStandalonePaymentBtn" type="button">수납기록 저장</button>
+                </div>
+              </div>
+            </details>
+            <div class="payment-table-tools hidden" aria-hidden="true">
+              <label>
+                수납월
+                <input id="paymentMonthFilter" type="month" />
+              </label>
+              <label>
+                상태
+                <select id="paymentStatusFilter">
+                  <option value="">전체</option>
+                  <option value="미납">미납</option>
+                  <option value="납부완료">완납</option>
+                </select>
+              </label>
+              <label>
+                검색
+                <input id="paymentSearchInput" type="search" placeholder="학생명, 수납명, 납부방법, 메모 검색" />
+              </label>
+            </div>
+            <div class="management-list" id="paymentOverview"></div>
+          </section>
+          <section class="management-panel payment-ledger-panel hidden">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">보관자료</p>
+                <h2>연월별 수납이력</h2>
+              </div>
+              <button class="ghost-button" id="closePaymentLedgerBtn" type="button">닫기</button>
+            </div>
+            <div class="payment-table-tools">
+              <label>
+                이력 연월
+                <input id="ledgerMonthFilter" type="month" />
+              </label>
+              <label>
+                검색
+                <input id="ledgerSearchInput" type="search" placeholder="학생명, 수납명, 메모 검색" />
+              </label>
+            </div>
+            <div class="payment-ledger" id="paymentLedger"></div>
+          </section>
+        </section>
+
+        <section class="view-section" id="financeView" data-view-section="finance" aria-label="매출관리">
+          <section class="management-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">매출관리</p>
+                <h2>수입 / 지출 기록</h2>
+              </div>
+            </div>
+
+            <div class="finance-summary-grid" aria-label="월별 매출 요약">
+              <article class="finance-summary-card">
+                <span>교육비 수입</span>
+                <strong id="financeTuitionIncome">0원</strong>
+                <small>교재비 제외 교육비</small>
+              </article>
+              <article class="finance-summary-card income">
+                <span>교재비 수입</span>
+                <strong id="financeBookFeeIncome">0원</strong>
+                <small>학부모 수납 교재비</small>
+              </article>
+              <article class="finance-summary-card income">
+                <span>기타 수입</span>
+                <strong id="financeOtherIncome">0원</strong>
+                <small>직접 입력한 수입</small>
+              </article>
+              <article class="finance-summary-card expense">
+                <span>지출</span>
+                <strong id="financeExpense">0원</strong>
+                <small>직접 입력한 지출</small>
+              </article>
+              <article class="finance-summary-card net">
+                <span>남는 금액</span>
+                <strong id="financeNetIncome">0원</strong>
+                <small>수입 - 지출</small>
+              </article>
+            </div>
+
+            <section class="subject-finance-panel" aria-label="과목별 매출현황">
+              <div class="panel-head compact-head">
+                <div>
+                  <p class="eyebrow">과목별 현황</p>
+                  <h2>과목별 매출 / 지출</h2>
+                </div>
+              </div>
+              <div class="subject-finance-grid" id="subjectFinanceOverview"></div>
+              <p class="small-text">한 과목 수납은 자동 분류하고, 여러 과목 수납은 납부 상세의 과목별 금액 배분을 저장한 금액만 반영합니다. 배분하지 않은 다과목 수납은 배분 필요로 모입니다.</p>
+            </section>
+
+            <div class="payment-table-tools finance-tools">
+              <label>
+                조회월
+                <input id="financeMonthFilter" type="month" />
+              </label>
+              <label>
+                구분
+                <select id="financeTypeFilter">
+                  <option value="">전체</option>
+                  <option value="income">수입</option>
+                  <option value="expense">지출</option>
+                </select>
+              </label>
+              <label>
+                검색
+                <input id="financeSearchInput" type="search" placeholder="항목, 분류, 메모 검색" />
+              </label>
+            </div>
+
+            <details class="finance-entry-panel" open>
+              <summary>수입 / 지출 입력</summary>
+              <div class="finance-form-grid">
+                <input id="financeRecordId" type="hidden" />
+                <label>
+                  날짜
+                  <input id="financeDate" type="date" />
+                </label>
+                <label>
+                  구분
+                  <select id="financeType">
+                    <option value="income">수입</option>
+                    <option value="expense">지출</option>
+                  </select>
+                </label>
+                <label>
+                  분류
+                  <select id="financeCategory"></select>
+                </label>
+                <label>
+                  항목명
+                  <input id="financeTitle" type="text" placeholder="예: 7월 교재 구입, 간식비" />
+                </label>
+                <label>
+                  금액
+                  <input id="financeAmount" type="number" min="0" step="1000" />
+                </label>
+                <label>
+                  결제방법
+                  <input id="financeMethod" type="text" placeholder="카드, 계좌, 현금 등" />
+                </label>
+                <label class="wide">
+                  메모
+                  <textarea id="financeMemo" rows="2" placeholder="영수증 위치, 거래처, 할인/환불 사유 등을 기록"></textarea>
+                </label>
+                <div class="finance-save-row wide">
+                  <button class="primary-button" id="saveFinanceBtn" type="button">기록 저장</button>
+                  <button class="ghost-button" id="clearFinanceBtn" type="button">입력 비우기</button>
+                </div>
+              </div>
+            </details>
+
+            <div class="finance-bottom-grid">
+              <details class="finance-history-panel" id="financeHistoryPanel">
+                <summary>
+                  <span>매출 상세내역</span>
+                  <strong id="financeHistorySummary">0건</strong>
+                </summary>
+                <div class="management-list" id="financeOverview"></div>
+              </details>
+
+              <details class="fixed-expense-panel">
+                <summary>고정지출 관리</summary>
+                <div class="fixed-expense-toolbar">
+                  <button class="primary-button" id="applyFixedExpensesBtn" type="button">이번달 고정지출 불러오기</button>
+                  <span class="small-text">이미 불러온 항목은 중복 생성되지 않습니다.</span>
+                </div>
+                <div class="finance-form-grid fixed-expense-form">
+                  <input id="fixedExpenseId" type="hidden" />
+                  <label>
+                    반복일
+                    <select id="fixedExpenseDay"></select>
+                  </label>
+                  <label>
+                    분류
+                    <select id="fixedExpenseCategory"></select>
+                  </label>
+                  <label>
+                    항목명
+                    <input id="fixedExpenseTitle" type="text" placeholder="예: 임대료, 선생님 급여, 관리비" />
+                  </label>
+                  <label>
+                    금액
+                    <input id="fixedExpenseAmount" type="number" min="0" step="1000" />
+                  </label>
+                  <label>
+                    결제방법
+                    <input id="fixedExpenseMethod" type="text" placeholder="계좌, 카드, 현금 등" />
+                  </label>
+                  <label class="wide">
+                    메모
+                    <textarea id="fixedExpenseMemo" rows="2" placeholder="거래처, 영수증 위치, 금액 변동 가능 여부 등을 기록"></textarea>
+                  </label>
+                  <div class="finance-save-row wide">
+                    <button class="primary-button" id="saveFixedExpenseBtn" type="button">고정지출 저장</button>
+                    <button class="ghost-button" id="clearFixedExpenseBtn" type="button">입력 비우기</button>
+                  </div>
+                </div>
+                <div class="fixed-expense-list" id="fixedExpenseList"></div>
+              </details>
+            </div>
+          </section>
+        </section>
+
+        <section class="view-section" id="tuitionView" data-view-section="tuition" aria-label="교육비 기준표">
+          <details class="management-panel collapsible-rate-panel" id="tuitionRateEntryPanel">
+            <summary class="collapsible-panel-summary">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">관리/설정</p>
+                  <h2>수업 교육비 기준</h2>
+                </div>
+              </div>
+            </summary>
+
+            <div class="tuition-form-grid">
+              <input id="tuitionRateId" type="hidden" />
+              <label>
+                과목
+                <select id="tuitionSubject"></select>
+              </label>
+              <label>
+                수업명
+                <input id="tuitionCourseName" type="text" placeholder="예: 미래엔 수학 주3회" />
+              </label>
+              <label>
+                회차/기준
+                <input id="tuitionSessions" type="text" placeholder="예: 주2회, 주3회, 1회" />
+              </label>
+              <label>
+                기본 교육비
+                <input id="tuitionAmount" type="number" min="0" step="1000" />
+              </label>
+              <label>
+                적용 시작일
+                <input id="tuitionEffectiveFrom" type="date" />
+              </label>
+              <label class="wide">
+                메모
+                <textarea id="tuitionMemo" rows="2" placeholder="예: 신규 기준, 장기생 기존가 유지, 형제 할인 별도"></textarea>
+              </label>
+              <div class="tuition-save-row wide">
+                <button class="primary-button" id="saveTuitionRateBtn" type="button">기준 저장</button>
+                <button class="ghost-button" id="clearTuitionRateBtn" type="button">입력 비우기</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="management-panel collapsible-rate-panel" id="tuitionRateListPanel">
+            <summary class="collapsible-panel-summary">
+              <div class="panel-head compact-head">
+                <div>
+                  <p class="eyebrow">기준 목록</p>
+                  <h3>등록된 교육비</h3>
+                </div>
+                <strong id="tuitionRateCount" class="small-text">0건</strong>
+              </div>
+            </summary>
+            <div class="management-list" id="tuitionRateList"></div>
+          </details>
+
+          <details class="management-panel collapsible-rate-panel" id="bookFeeRateEntryPanel">
+            <summary class="collapsible-panel-summary">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">관리/설정</p>
+                  <h2>교재비 기준</h2>
+                </div>
+              </div>
+            </summary>
+
+            <div class="tuition-form-grid">
+              <input id="bookFeeRateId" type="hidden" />
+              <label>
+                과목
+                <select id="bookFeeSubject"></select>
+              </label>
+              <label>
+                교재군
+                <input id="bookFeeProgram" type="text" placeholder="예: 미네르바 독서논술, CPS 문해력" />
+              </label>
+              <label>
+                교재명
+                <input id="bookFeeTitle" type="text" placeholder="예: 리딩하이 정독교재, 미래엔 영어" />
+              </label>
+              <label>
+                단계/권차
+                <input id="bookFeeLevel" type="text" placeholder="예: 초5, 1권, 기본편" />
+              </label>
+              <label>
+                학부모 납부금액
+                <input id="bookFeeSalePrice" type="number" min="0" step="1000" />
+              </label>
+              <label>
+                매입가
+                <input id="bookFeePurchasePrice" type="number" min="0" step="1000" />
+              </label>
+              <label>
+                적용 시작일
+                <input id="bookFeeEffectiveFrom" type="date" />
+              </label>
+              <label class="wide">
+                메모
+                <textarea id="bookFeeMemo" rows="2" placeholder="예: 판매가 22,000원 / 매입가 20,500원, 기존 재고 소진 후 변경"></textarea>
+              </label>
+              <div class="tuition-save-row wide">
+                <button class="primary-button" id="saveBookFeeRateBtn" type="button">교재비 저장</button>
+                <button class="ghost-button" id="clearBookFeeRateBtn" type="button">입력 비우기</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="management-panel collapsible-rate-panel" id="bookFeeRateListPanel">
+            <summary class="collapsible-panel-summary">
+              <div class="panel-head compact-head">
+                <div>
+                  <p class="eyebrow">기준 목록</p>
+                  <h3>등록된 교재비</h3>
+                </div>
+                <strong id="bookFeeRateCount" class="small-text">0건</strong>
+              </div>
+            </summary>
+            <div class="management-list" id="bookFeeRateList"></div>
+          </details>
+          <!-- legacy tuition panels removed: kept above as collapsible sections -->
+          <section class="management-panel legacy-hidden">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">관리/설정</p>
+                <h2>수업 교육비 기준</h2>
+              </div>
+            </div>
+
+            <div class="tuition-form-grid">
+              <input id="tuitionRateId" type="hidden" />
+              <label>
+                과목
+                <select id="tuitionSubject"></select>
+              </label>
+              <label>
+                수업명
+                <input id="tuitionCourseName" type="text" placeholder="예: 미래엔 수학 주3회" />
+              </label>
+              <label>
+                회차/기준
+                <input id="tuitionSessions" type="text" placeholder="예: 주2회, 주3회, 1회" />
+              </label>
+              <label>
+                기본 교육비
+                <input id="tuitionAmount" type="number" min="0" step="1000" />
+              </label>
+              <label>
+                적용 시작일
+                <input id="tuitionEffectiveFrom" type="date" />
+              </label>
+              <label class="wide">
+                메모
+                <textarea id="tuitionMemo" rows="2" placeholder="예: 신규 기준, 장기생 기존가 유지, 형제 할인 별도"></textarea>
+              </label>
+              <div class="tuition-save-row wide">
+                <button class="primary-button" id="saveTuitionRateBtn" type="button">기준 저장</button>
+                <button class="ghost-button" id="clearTuitionRateBtn" type="button">입력 비우기</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="management-panel">
+            <div class="panel-head compact-head">
+              <div>
+                <p class="eyebrow">기준 목록</p>
+                <h3>등록된 교육비</h3>
+              </div>
+              <strong id="tuitionRateCount" class="small-text">0건</strong>
+            </div>
+            <div class="management-list" id="tuitionRateList"></div>
+          </section>
+
+          <section class="management-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">관리/설정</p>
+                <h2>교재비 기준</h2>
+              </div>
+            </div>
+
+            <div class="tuition-form-grid">
+              <input id="bookFeeRateId" type="hidden" />
+              <label>
+                과목
+                <select id="bookFeeSubject"></select>
+              </label>
+              <label>
+                교재군
+                <input id="bookFeeProgram" type="text" placeholder="예: 미네르바 독서논술, CPS 문해력" />
+              </label>
+              <label>
+                교재명
+                <input id="bookFeeTitle" type="text" placeholder="예: 리딩하이 정독교재, 미래엔 영어" />
+              </label>
+              <label>
+                단계/권차
+                <input id="bookFeeLevel" type="text" placeholder="예: 초5, 1권, 기본편" />
+              </label>
+              <label>
+                학부모 납부금액
+                <input id="bookFeeSalePrice" type="number" min="0" step="1000" />
+              </label>
+              <label>
+                매입가
+                <input id="bookFeePurchasePrice" type="number" min="0" step="1000" />
+              </label>
+              <label>
+                적용 시작일
+                <input id="bookFeeEffectiveFrom" type="date" />
+              </label>
+              <label class="wide">
+                메모
+                <textarea id="bookFeeMemo" rows="2" placeholder="예: 판매가 22,000원 / 매입가 20,500원, 기존 재고 소진 후 변경"></textarea>
+              </label>
+              <div class="tuition-save-row wide">
+                <button class="primary-button" id="saveBookFeeRateBtn" type="button">교재비 저장</button>
+                <button class="ghost-button" id="clearBookFeeRateBtn" type="button">입력 비우기</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="management-panel">
+            <div class="panel-head compact-head">
+              <div>
+                <p class="eyebrow">기준 목록</p>
+                <h3>등록된 교재비</h3>
+              </div>
+              <strong id="bookFeeRateCount" class="small-text">0건</strong>
+            </div>
+            <div class="management-list" id="bookFeeRateList"></div>
+          </section>
+        </section>
+
+        <section class="view-section" id="booksView" data-view-section="books" aria-label="교재관리">
+          <section class="management-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">교재관리</p>
+                <h2>교재 등록 / 재고현황</h2>
+              </div>
+            </div>
+
+            <div class="book-summary-grid" aria-label="교재 재고 요약">
+              <article class="book-summary-card">
+                <span>등록 교재</span>
+                <strong id="bookCatalogCount">0권</strong>
+              </article>
+              <article class="book-summary-card">
+                <span>전체 재고</span>
+                <strong id="bookTotalStock">0권</strong>
+              </article>
+              <article class="book-summary-card warning">
+                <span>재고 부족</span>
+                <strong id="bookLowStockCount">0종</strong>
+              </article>
+            </div>
+
+            <div class="payment-table-tools book-tools">
+              <label>
+                과목
+                <select id="bookSubjectFilter">
+                  <option value="">전체 과목</option>
+                </select>
+              </label>
+              <label>
+                검색
+                <input id="bookSearchInput" type="search" placeholder="교재명, 단계, 출판사 검색" />
+              </label>
+            </div>
+
+            <details class="book-entry-panel" open>
+              <summary>교재 등록</summary>
+              <div class="book-form-grid">
+                <input id="bookId" type="hidden" />
+                <label>
+                  과목
+                  <select id="bookSubject"></select>
+                </label>
+                <label>
+                  교재명
+                  <input id="bookTitle" type="text" placeholder="예: 미래엔 수학, 소한이 한글" />
+                </label>
+                <label>
+                  단계
+                  <input id="bookLevel" type="text" placeholder="예: 초3, 중등, 1단계" />
+                </label>
+                <label>
+                  권차
+                  <input id="bookVolume" type="text" placeholder="예: 1권, 3-1, 기본편" />
+                </label>
+                <label>
+                  출판사
+                  <input id="bookPublisher" type="text" />
+                </label>
+                <label>
+                  기본 매입가
+                  <input id="bookPurchasePrice" type="number" min="0" step="1000" />
+                </label>
+                <label>
+                  기본 판매가
+                  <input id="bookSalePrice" type="number" min="0" step="1000" />
+                </label>
+                <label class="wide">
+                  메모
+                  <textarea id="bookMemo" rows="2" placeholder="교재 특징, 사용 과목, 비고"></textarea>
+                </label>
+                <div class="finance-save-row wide">
+                  <button class="primary-button" id="saveBookBtn" type="button">교재 저장</button>
+                  <button class="ghost-button" id="clearBookBtn" type="button">입력 비우기</button>
+                </div>
+              </div>
+            </details>
+
+            <details class="book-entry-panel">
+              <summary>교재 입고 / 사용 기록</summary>
+              <div class="book-form-grid">
+                <input id="bookStockRecordId" type="hidden" />
+                <label>
+                  날짜
+                  <input id="bookStockDate" type="date" />
+                </label>
+                <label>
+                  교재
+                  <select id="bookStockBook"></select>
+                </label>
+                <label>
+                  구분
+                  <select id="bookStockType">
+                    <option value="in">입고</option>
+                    <option value="out">사용</option>
+                  </select>
+                </label>
+                <label>
+                  수량
+                  <input id="bookStockQuantity" type="number" min="1" step="1" />
+                </label>
+                <label>
+                  단가
+                  <input id="bookStockUnitPrice" type="number" min="0" step="1000" />
+                </label>
+                <label>
+                  거래처/학생
+                  <input id="bookStockPartner" type="text" placeholder="예: 거래처명 또는 학생명" />
+                </label>
+                <label class="wide check-line">
+                  <input id="bookStockCreateExpense" type="checkbox" checked />
+                  입고 금액을 매출관리 지출에도 기록
+                </label>
+                <label class="wide">
+                  메모
+                  <textarea id="bookStockMemo" rows="2" placeholder="구입처, 지급 학생, 영수증 위치 등"></textarea>
+                </label>
+                <div class="finance-save-row wide">
+                  <button class="primary-button" id="saveBookStockBtn" type="button">입출고 저장</button>
+                  <button class="ghost-button" id="clearBookStockBtn" type="button">입력 비우기</button>
+                </div>
+              </div>
+            </details>
+
+            <div class="book-content-grid">
+              <section>
+                <div class="panel-head compact-head">
+                  <div>
+                    <p class="eyebrow">재고현황</p>
+                    <h3>교재별 현재 재고</h3>
+                  </div>
+                </div>
+                <div class="management-list" id="bookInventory"></div>
+              </section>
+              <section>
+                <div class="panel-head compact-head">
+                  <div>
+                    <p class="eyebrow">최근 기록</p>
+                    <h3>입고 / 사용 내역</h3>
+                  </div>
+                </div>
+                <div class="management-list" id="bookStockHistory"></div>
+              </section>
+            </div>
+          </section>
+        </section>
+
+        <section class="view-section" id="attendanceView" data-view-section="attendance" aria-label="등원관리">
+          <section class="management-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">등원관리</p>
+                <h2>학생별 등하원 기록</h2>
+              </div>
+            </div>
+            <div class="payment-table-tools attendance-tools">
+              <label>
+                조회월
+                <input id="attendanceMonthFilter" type="month" />
+              </label>
+              <label>
+                검색
+                <input id="attendanceSearchInput" type="search" placeholder="학생명, 학교, 학년, 사유 검색" />
+              </label>
+            </div>
+            <div class="attendance-calendar-wrap" id="attendanceCalendar"></div>
+            <div class="attendance-day-panel">
+              <div class="panel-head compact-head">
+                <div>
+                  <p class="eyebrow">선택한 날짜</p>
+                  <h3 id="attendanceSelectedDateTitle">오늘 등원명단</h3>
+                </div>
+                <span id="attendanceSelectedDateSummary" class="small-text"></span>
+              </div>
+              <div class="management-list" id="attendanceOverview"></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="view-section" id="checkinView" data-view-section="checkin" aria-label="태블릿 출석체크">
+          <section class="checkin-kiosk">
+            <div class="checkin-header">
+              <div>
+                <p class="eyebrow">태블릿 출석체크</p>
+                <h2>출첵번호 입력</h2>
+              </div>
+              <strong id="checkinClock">오늘</strong>
+            </div>
+
+            <div class="checkin-mode-toggle" aria-label="등하원 선택">
+              <button class="active" id="checkinArriveMode" type="button">등원</button>
+              <button id="checkinLeaveMode" type="button">하원</button>
+            </div>
+
+            <input id="checkinCodeInput" class="checkin-code-input" type="text" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="출첵번호" aria-label="출첵번호 입력" />
+
+            <div class="checkin-result" id="checkinResult">출첵번호 4자리를 입력하면 자동 저장됩니다.</div>
+            <div class="checkin-match" id="checkinMatchedStudent"></div>
+
+            <div class="checkin-keypad" aria-label="숫자 키패드">
+              <button type="button" data-checkin-key="1">1</button>
+              <button type="button" data-checkin-key="2">2</button>
+              <button type="button" data-checkin-key="3">3</button>
+              <button type="button" data-checkin-key="4">4</button>
+              <button type="button" data-checkin-key="5">5</button>
+              <button type="button" data-checkin-key="6">6</button>
+              <button type="button" data-checkin-key="7">7</button>
+              <button type="button" data-checkin-key="8">8</button>
+              <button type="button" data-checkin-key="9">9</button>
+              <button class="muted" id="checkinClearBtn" type="button">지움</button>
+              <button type="button" data-checkin-key="0">0</button>
+              <button class="muted" id="checkinBackspaceBtn" type="button">←</button>
+            </div>
+
+            <div class="checkin-submit-row">
+              <button class="primary-button" id="checkinSubmitBtn" type="button">저장</button>
+            </div>
+
+            <section class="checkin-recent-panel">
+              <div class="panel-head compact-head">
+                <div>
+                  <p class="eyebrow">오늘 기록</p>
+                  <h3>최근 등하원</h3>
+                </div>
+              </div>
+              <div id="checkinRecentList" class="checkin-recent-list"></div>
+            </section>
+          </section>
+        </section>
+
+        <section class="view-section" id="staffView" data-view-section="staff" aria-label="직원관리">
+          <section class="staff-grid">
+            <section class="management-panel" id="staffAccountPanel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">직원관리</p>
+                  <h2>선생님 계정 등록</h2>
+                </div>
+              </div>
+              <div class="staff-form-grid">
+                <input id="staffAccountId" type="hidden" />
+                <label>
+                  본명
+                  <input id="staffNameInput" type="text" placeholder="예: 홍길동" />
+                </label>
+                <label>
+                  표시이름
+                  <input id="staffDisplayNameInput" type="text" placeholder="예: 수학선생님, 영어선생님" />
+                </label>
+                <label>
+                  권한
+                  <select id="staffRoleInput">
+                    <option value="teacher">선생님</option>
+                    <option value="desk">데스크</option>
+                    <option value="director">원장</option>
+                  </select>
+                </label>
+                <label>
+                  비밀번호
+                  <input id="staffPasswordInput" type="text" placeholder="개별 비밀번호" />
+                </label>
+                <div class="staff-save-row">
+                  <button class="primary-button" id="saveStaffAccountBtn" type="button">계정 저장</button>
+                  <button class="ghost-button" id="clearStaffAccountBtn" type="button">입력 비우기</button>
+                </div>
+              </div>
+              <div class="management-list staff-account-list" id="staffAccountList"></div>
+            </section>
+
+            <section class="management-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">근태관리</p>
+                  <h2>출근 / 퇴근 기록</h2>
+                </div>
+                <strong id="staffClockLabel" class="small-text">오늘</strong>
+              </div>
+              <div class="staff-clock-card">
+                <div>
+                  <strong id="staffCurrentUserName">로그인 사용자</strong>
+                  <span id="staffTodayStatus">오늘 기록 없음</span>
+                </div>
+                <div class="staff-clock-actions">
+                  <button class="primary-button" id="staffStartBtn" type="button">출근</button>
+                  <button class="ghost-button" id="staffEndBtn" type="button">퇴근</button>
+                </div>
+              </div>
+              <div class="payment-table-tools staff-tools">
+                <label>
+                  조회월
+                  <input id="staffMonthFilter" type="month" />
+                </label>
+                <label>
+                  직원 검색
+                  <input id="staffSearchInput" type="search" placeholder="이름, 권한, 메모 검색" />
+                </label>
+              </div>
+              <div class="management-list" id="staffAttendanceList"></div>
+            </section>
+          </section>
+        </section>
+
+        <section class="view-section" id="kakaoView" data-view-section="kakao" aria-label="알림톡 설정">
+          <section class="kakao-grid">
+            <section class="management-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">알림톡 설정</p>
+                  <h2>출결 알림 준비</h2>
+                </div>
+              </div>
+              <div class="kakao-form-grid">
+                <label class="wide check-line">
+                  <input id="kakaoEnabled" type="checkbox" />
+                  출석체크 시 알림톡 발송대기 기록 만들기
+                </label>
+                <label>
+                  발송 대행사
+                  <input id="kakaoProvider" type="text" placeholder="예: 솔라피, 알리고, 비즈엠" />
+                </label>
+                <label>
+                  카카오 채널명
+                  <input id="kakaoChannelName" type="text" placeholder="예: 미래엔 에듀 영수학원" />
+                </label>
+                <label>
+                  등원 템플릿 코드
+                  <input id="kakaoArriveTemplate" type="text" placeholder="대행사 승인 후 입력" />
+                </label>
+                <label>
+                  하원 템플릿 코드
+                  <input id="kakaoLeaveTemplate" type="text" placeholder="대행사 승인 후 입력" />
+                </label>
+                <label class="wide">
+                  등원 문구 미리보기
+                  <textarea id="kakaoArriveMessage" rows="3"></textarea>
+                </label>
+                <label class="wide">
+                  하원 문구 미리보기
+                  <textarea id="kakaoLeaveMessage" rows="3"></textarea>
+                </label>
+                <div class="kakao-save-row wide">
+                  <button class="primary-button" id="saveKakaoSettingsBtn" type="button">알림톡 설정 저장</button>
+                  <button class="ghost-button" id="resetKakaoPreviewBtn" type="button">기본 문구</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="management-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">발송대기 기록</p>
+                  <h2>최근 알림톡 준비내역</h2>
+                </div>
+                <button class="ghost-button" id="clearKakaoLogsBtn" type="button">기록 정리</button>
+              </div>
+              <div class="payment-table-tools">
+                <label>
+                  조회월
+                  <input id="kakaoMonthFilter" type="month" />
+                </label>
+                <label>
+                  검색
+                  <input id="kakaoSearchInput" type="search" placeholder="학생명, 연락처, 상태 검색" />
+                </label>
+              </div>
+              <div class="management-list" id="kakaoLogList"></div>
+            </section>
+          </section>
+        </section>
+
+        <section class="view-section" id="archiveView" data-view-section="archive" aria-label="자료보관">
+          <section class="archive-grid">
+            <section class="management-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">자료 백업 / 복원</p>
+                  <h2>전체 자료 보관</h2>
+                </div>
+              </div>
+              <p class="archive-note">학생, 납부, 매출, 교재, 출결, 공지, 변경이력을 한 파일로 저장합니다. 외장하드나 클라우드에도 월 1회 이상 따로 보관해주세요.</p>
+              <div class="archive-actions">
+                <button class="primary-button" id="exportAllBackupBtn" type="button">전체 백업 저장</button>
+                <button class="ghost-button" id="importAllBackupBtn" type="button">전체 백업 불러오기</button>
+                <input class="hidden" id="allBackupFile" type="file" accept="application/json,.json" />
+              </div>
+            </section>
+
+            <section class="management-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">월별 마감자료</p>
+                  <h2>점검용 요약</h2>
+                </div>
+              </div>
+              <div class="archive-filter">
+                <label>
+                  마감월
+                  <input id="archiveMonthFilter" type="month" />
+                </label>
+                <button class="ghost-button" id="exportMonthlyCloseBtn" type="button">마감자료 저장</button>
+              </div>
+              <div class="archive-summary-grid" id="monthlyCloseSummary"></div>
+            </section>
+
+            <section class="management-panel archive-wide">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">변경이력</p>
+                  <h2>최근 수정 기록</h2>
+                </div>
+              </div>
+              <div class="change-log-list" id="changeLogList"></div>
+            </section>
+          </section>
+        </section>
+      </div>
+    </div>
+
+    <div class="login-screen hidden" id="loginScreen" role="dialog" aria-modal="true" aria-label="로그인">
+      <div class="login-card">
+        <div>
+          <p class="eyebrow">미래엔 에듀 영수학원</p>
+          <h2>관리자 로그인</h2>
+        </div>
+        <label>
+          사용자
+          <select id="loginUserSelect"></select>
+        </label>
+        <label>
+          비밀번호
+          <input id="loginPassword" type="password" autocomplete="current-password" />
+        </label>
+        <button class="primary-button" id="loginBtn" type="button">로그인</button>
+        <p class="login-help">비밀번호는 원장님께 문의해주세요.</p>
+      </div>
+    </div>
+
+    <script src="./assets/payment-history-generated.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
