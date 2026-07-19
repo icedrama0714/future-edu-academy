@@ -7431,25 +7431,13 @@ function compactText(value, limit = 70) {
   return text.length > limit ? `${text.slice(0, limit)}...` : text;
 }
 
-function generateLearningReport() {
-  const student = students.find((item) => item.id === selectedId);
-  if (!student) {
-    alert("먼저 학생을 선택해주세요.");
-    return;
-  }
-
-  const period = $("learningReportPeriod")?.value || "month";
-  setLearningReportRange(period);
-  const start = $("learningReportStart")?.value || currentMonthRange().start;
-  const end = $("learningReportEnd")?.value || currentMonthRange().end;
-  const records = recordsForLearningReport(student, start, end);
+function buildLearningReportDraft(student, start, end, records) {
   const subjectNames = formatSubjectNames(student).join(", ") || "수강 과목 미기재";
   const name = student.studentName || "학생";
   const grade = student.grade || "";
 
   if (!records.length) {
-    $("learningReportText").value = `${name} ${grade} 학습리포트\n기간: ${start} ~ ${end}\n수강 과목: ${subjectNames}\n\n해당 기간에 저장된 학습 피드백 기록이 없습니다.\n수업 후 교재/단원, 이해도, 태도, 과제를 기록하면 이곳에서 학부모님께 보낼 리포트 초안을 만들 수 있습니다.`;
-    return;
+    return `${name} ${grade} 학습리포트\n기간: ${start} ~ ${end}\n수강 과목: ${subjectNames}\n\n해당 기간에 저장된 학습 피드백 기록이 없습니다.\n수업 후 교재/단원, 이해도, 태도, 과제를 기록하면 이곳에서 학부모님께 보낼 리포트 초안을 만들 수 있습니다.`;
   }
 
   const subjectMap = new Map();
@@ -7474,7 +7462,78 @@ function generateLearningReport() {
   const mainUnderstanding = mostCommonValue(records, "understanding") || "확인 중";
   const mainAttitude = mostCommonValue(records, "attitude") || "확인 중";
 
-  $("learningReportText").value = `${name} ${grade} 학습리포트\n기간: ${start} ~ ${end}\n수강 과목: ${subjectNames}\n\n[학습 요약]\n${subjectSummary}\n\n[최근 학습 흐름]\n${recentNotes}\n\n[종합 의견]\n${name} 학생은 해당 기간 동안 총 ${records.length}개의 학습기록이 저장되었습니다. 전반적인 이해도는 ${mainUnderstanding}, 수업 태도는 ${mainAttitude}로 확인됩니다. 저장된 기록을 바탕으로 부족한 부분은 다음 수업에서 이어서 점검하고, 안정적으로 진행되는 부분은 난이도를 조금씩 높여가겠습니다.\n\n[다음 학습 방향]\n다음 수업에서는 최근 기록된 교재와 단원을 기준으로 복습이 필요한 부분을 먼저 확인한 뒤, 새로운 진도를 이어가겠습니다.`;
+  return `${name} ${grade} 학습리포트\n기간: ${start} ~ ${end}\n수강 과목: ${subjectNames}\n\n[학습 요약]\n${subjectSummary}\n\n[최근 학습 흐름]\n${recentNotes}\n\n[종합 의견]\n${name} 학생은 해당 기간 동안 총 ${records.length}개의 학습기록이 저장되었습니다. 전반적인 이해도는 ${mainUnderstanding}, 수업 태도는 ${mainAttitude}로 확인됩니다. 저장된 기록을 바탕으로 부족한 부분은 다음 수업에서 이어서 점검하고, 안정적으로 진행되는 부분은 난이도를 조금씩 높여가겠습니다.\n\n[다음 학습 방향]\n다음 수업에서는 최근 기록된 교재와 단원을 기준으로 복습이 필요한 부분을 먼저 확인한 뒤, 새로운 진도를 이어가겠습니다.`;
+}
+
+function learningReportContext(student, start, end, records, baseDraft) {
+  return {
+    academy: "미래엔 에듀 영수학원",
+    studentName: student.studentName || "",
+    grade: student.grade || "",
+    school: student.school || "",
+    subjects: formatSubjectNames(student),
+    period: { start, end },
+    feedbackRecords: records.slice(-12).map((record) => ({
+      date: record.date || "",
+      subject: record.subject || "",
+      unit: record.unit || "",
+      understanding: record.understanding || "",
+      attitude: record.attitude || "",
+      homework: record.homework || "",
+      text: record.text || "",
+    })),
+    baseDraft,
+  };
+}
+
+async function requestAiLearningReport(context) {
+  if (window.location.protocol === "file:") return "";
+  try {
+    const response = await fetch("/api/generate-learning-report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(context),
+    });
+    if (!response.ok) return "";
+    const result = await response.json();
+    return String(result.report || "").trim();
+  } catch (error) {
+    console.warn("AI report fallback used", error);
+    return "";
+  }
+}
+
+async function generateLearningReport() {
+  const student = students.find((item) => item.id === selectedId);
+  if (!student) {
+    alert("먼저 학생을 선택해주세요.");
+    return;
+  }
+
+  const period = $("learningReportPeriod")?.value || "month";
+  setLearningReportRange(period);
+  const start = $("learningReportStart")?.value || currentMonthRange().start;
+  const end = $("learningReportEnd")?.value || currentMonthRange().end;
+  const records = recordsForLearningReport(student, start, end);
+  const baseDraft = buildLearningReportDraft(student, start, end, records);
+  $("learningReportText").value = baseDraft;
+
+  if (!records.length) return;
+
+  const button = $("generateLearningReportBtn");
+  const originalText = button?.textContent || "";
+  if (button) {
+    button.disabled = true;
+    button.textContent = "AI 초안 작성 중";
+  }
+
+  const aiReport = await requestAiLearningReport(learningReportContext(student, start, end, records, baseDraft));
+  if (aiReport) $("learningReportText").value = aiReport;
+
+  if (button) {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
 }
 
 function copyLearningReport() {
@@ -7524,13 +7583,13 @@ function renderLearningReportPreview() {
   preview.innerHTML = reportTextToHtml(text);
 }
 
-function previewLearningReport() {
-  if (!$("learningReportText")?.value.trim()) generateLearningReport();
+async function previewLearningReport() {
+  if (!$("learningReportText")?.value.trim()) await generateLearningReport();
   renderLearningReportPreview();
 }
 
-function printLearningReport() {
-  if (!$("learningReportText")?.value.trim()) generateLearningReport();
+async function printLearningReport() {
+  if (!$("learningReportText")?.value.trim()) await generateLearningReport();
   const text = $("learningReportText")?.value.trim();
   if (!text) {
     alert("프린트할 학습리포트가 없습니다.");
@@ -7624,8 +7683,8 @@ function bindEvents() {
   $("saveFeedbackBtn").addEventListener("click", saveFeedbackRecord);
   $("recommendFeedbackBtn").addEventListener("click", recommendFeedbackText);
   $("feedbackPhoto").addEventListener("change", (event) => readFeedbackPhoto(event.target.files[0]));
-  $("generateLearningReportBtn")?.addEventListener("click", () => {
-    generateLearningReport();
+  $("generateLearningReportBtn")?.addEventListener("click", async () => {
+    await generateLearningReport();
     renderLearningReportPreview();
   });
   $("previewLearningReportBtn")?.addEventListener("click", previewLearningReport);
