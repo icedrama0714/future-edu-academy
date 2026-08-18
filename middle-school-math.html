@@ -86,11 +86,12 @@
       table-layout: fixed;
       font-size: 14px;
     }
-    col.student { width: 20%; }
-    col.english { width: 7%; }
-    col.schedule { width: 15%; }
-    col.books { width: 33%; }
-    col.notes { width: 25%; }
+    col.student { width: 18%; }
+    col.english { width: 6%; }
+    col.schedule { width: 12%; }
+    col.school-book { width: 21%; }
+    col.books { width: 27%; }
+    col.notes { width: 16%; }
     th,
     td {
       border-bottom: 1px solid var(--line);
@@ -121,6 +122,12 @@
     td[contenteditable="true"]:focus {
       background: #f1f6f2;
       box-shadow: inset 0 0 0 2px #7da188;
+    }
+    .source-note {
+      margin-left: auto;
+      color: #6c766f;
+      font-size: 12px;
+      font-weight: 500;
     }
     .lesson-time {
       display: flex;
@@ -197,6 +204,7 @@
           <col class="student" />
           <col class="english" />
           <col class="schedule" />
+          <col class="school-book" />
           <col class="books" />
           <col class="notes" />
         </colgroup>
@@ -205,20 +213,21 @@
             <th>학교·학년 / 원생명</th>
             <th class="english-cell">영어</th>
             <th>수업 요일·횟수</th>
+            <th>학교 수학 교과서</th>
             <th>현재 교재·진도</th>
             <th>수업 참고사항</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td contenteditable="true">분성중1 김마가희</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="분성중1 김마가희 영어 수강" /></td><td contenteditable="true">월·수·목</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">삼계중1 김민준</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중1 김민준 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">삼계중1 김지율</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중1 김지율 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">삼계중1 이서윤</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중1 이서윤 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">분성중2 안서희</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="분성중2 안서희 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">구산중2 이시율</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="구산중2 이시율 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">체크체크 + 미래엔 프리</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">삼계중2 주현영</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중2 주현영 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">체크체크 + 미래엔 프리</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">구산중2 홍서현</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="구산중2 홍서현 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">구산중3 오경훈</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="구산중3 오경훈 영어 수강" /></td><td contenteditable="true">월·수·금</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">분성중1 김마가희</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="분성중1 김마가희 영어 수강" /></td><td contenteditable="true">월·수·목</td><td contenteditable="true">천재교육(김동재)</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">삼계중1 김민준</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중1 김민준 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">비상교육(이진호)</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">삼계중1 김지율</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중1 김지율 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">비상교육(이진호)</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">삼계중1 이서윤</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중1 이서윤 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">비상교육(이진호)</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">분성중2 안서희</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="분성중2 안서희 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">천재교육(김동재)</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">구산중2 이시율</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="구산중2 이시율 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">미래엔(황선욱)</td><td contenteditable="true">체크체크 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">삼계중2 주현영</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중2 주현영 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">비상교육(이진호)</td><td contenteditable="true">체크체크 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">구산중2 홍서현</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="구산중2 홍서현 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">미래엔(황선욱)</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">구산중3 오경훈</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="구산중3 오경훈 영어 수강" /></td><td contenteditable="true">월·수·금</td><td contenteditable="true">비상교육(김원경)</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
         </tbody>
       </table>
     </div>
