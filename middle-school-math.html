@@ -86,10 +86,11 @@
       table-layout: fixed;
       font-size: 14px;
     }
-    col.student { width: 22%; }
-    col.schedule { width: 16%; }
-    col.books { width: 35%; }
-    col.notes { width: 27%; }
+    col.student { width: 20%; }
+    col.english { width: 7%; }
+    col.schedule { width: 15%; }
+    col.books { width: 33%; }
+    col.notes { width: 25%; }
     th,
     td {
       border-bottom: 1px solid var(--line);
@@ -102,6 +103,16 @@
       background: var(--soft);
       font-weight: 700;
       white-space: nowrap;
+    }
+    .english-cell {
+      text-align: center;
+    }
+    .english-check {
+      width: 17px;
+      height: 17px;
+      margin: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
     }
     td[contenteditable="true"] {
       min-height: 44px;
@@ -184,6 +195,7 @@
       <table aria-label="중등 수학 원생 인수인계표">
         <colgroup>
           <col class="student" />
+          <col class="english" />
           <col class="schedule" />
           <col class="books" />
           <col class="notes" />
@@ -191,21 +203,22 @@
         <thead>
           <tr>
             <th>학교·학년 / 원생명</th>
+            <th class="english-cell">영어</th>
             <th>수업 요일·횟수</th>
             <th>현재 교재·진도</th>
             <th>수업 참고사항</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td contenteditable="true">분성중1 김마가희</td><td contenteditable="true">월·수·목</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">삼계중1 김민준</td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">삼계중1 김지율</td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">삼계중1 이서윤</td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">분성중2 안서희</td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">구산중2 이시율</td><td contenteditable="true">주 5회</td><td contenteditable="true">체크체크 + 미래엔 프리</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">삼계중2 주현영</td><td contenteditable="true">주 5회</td><td contenteditable="true">체크체크 + 미래엔 프리</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">구산중2 홍서현</td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
-          <tr><td contenteditable="true">구산중3 오경훈</td><td contenteditable="true">월·수·금</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">분성중1 김마가희</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="분성중1 김마가희 영어 수강" /></td><td contenteditable="true">월·수·목</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">삼계중1 김민준</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중1 김민준 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">삼계중1 김지율</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중1 김지율 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">삼계중1 이서윤</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중1 이서윤 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">분성중2 안서희</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="분성중2 안서희 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">구산중2 이시율</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="구산중2 이시율 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">체크체크 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">삼계중2 주현영</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="삼계중2 주현영 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">체크체크 + 미래엔 프리</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">구산중2 홍서현</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="구산중2 홍서현 영어 수강" /></td><td contenteditable="true">주 5회</td><td contenteditable="true">개념유형 라이트 + 미래엔 유형</td><td contenteditable="true"></td></tr>
+          <tr><td contenteditable="true">구산중3 오경훈</td><td class="english-cell"><input class="english-check" type="checkbox" aria-label="구산중3 오경훈 영어 수강" /></td><td contenteditable="true">월·수·금</td><td contenteditable="true">개념유형 라이트 + 미래엔 프리</td><td contenteditable="true"></td></tr>
         </tbody>
       </table>
     </div>
@@ -216,7 +229,9 @@
   </main>
   <script>
     const storageKey = "futureEduMiddleSchoolMathTableV1";
+    const englishStorageKey = "futureEduMiddleSchoolMathEnglishV1";
     const editableCells = Array.from(document.querySelectorAll('td[contenteditable="true"]'));
+    const englishChecks = Array.from(document.querySelectorAll(".english-check"));
     const saveStatus = document.getElementById("saveStatus");
 
     try {
@@ -226,8 +241,15 @@
           cell.textContent = savedCells[index];
         });
       }
+      const savedEnglish = JSON.parse(localStorage.getItem(englishStorageKey) || "null");
+      if (Array.isArray(savedEnglish) && savedEnglish.length === englishChecks.length) {
+        englishChecks.forEach(function (checkbox, index) {
+          checkbox.checked = Boolean(savedEnglish[index]);
+        });
+      }
     } catch (error) {
       localStorage.removeItem(storageKey);
+      localStorage.removeItem(englishStorageKey);
     }
 
     document.getElementById("saveButton").addEventListener("click", function () {
@@ -235,6 +257,9 @@
         return cell.textContent.trim();
       });
       localStorage.setItem(storageKey, JSON.stringify(values));
+      localStorage.setItem(englishStorageKey, JSON.stringify(englishChecks.map(function (checkbox) {
+        return checkbox.checked;
+      })));
       saveStatus.textContent = "저장됨";
       window.setTimeout(function () {
         saveStatus.textContent = "";
