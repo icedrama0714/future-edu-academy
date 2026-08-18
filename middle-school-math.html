@@ -39,6 +39,7 @@
       gap: 8px;
     }
     .back-link,
+    .save-button,
     .print-button {
       min-height: 38px;
       border: 1px solid var(--line);
@@ -53,10 +54,21 @@
       background: #ffffff;
       color: var(--ink);
     }
+    .save-button {
+      background: #ffffff;
+      color: var(--accent);
+      border-color: var(--accent);
+    }
     .print-button {
       border-color: var(--accent);
       background: var(--accent);
       color: var(--accent-ink);
+    }
+    .save-status {
+      min-width: 42px;
+      color: #5c6b60;
+      font-size: 12px;
+      text-align: right;
     }
     h1 {
       margin: 0 0 18px;
@@ -162,6 +174,8 @@
     <div class="toolbar">
       <a class="back-link" href="./index.html">학원관리로 돌아가기</a>
       <div class="toolbar-actions">
+        <span class="save-status" id="saveStatus" aria-live="polite"></span>
+        <button class="save-button" id="saveButton" type="button">수정 저장</button>
         <button class="print-button" id="printButton" type="button">인쇄</button>
       </div>
     </div>
@@ -201,6 +215,32 @@
     </div>
   </main>
   <script>
+    const storageKey = "futureEduMiddleSchoolMathTableV1";
+    const editableCells = Array.from(document.querySelectorAll('td[contenteditable="true"]'));
+    const saveStatus = document.getElementById("saveStatus");
+
+    try {
+      const savedCells = JSON.parse(localStorage.getItem(storageKey) || "null");
+      if (Array.isArray(savedCells) && savedCells.length === editableCells.length) {
+        editableCells.forEach(function (cell, index) {
+          cell.textContent = savedCells[index];
+        });
+      }
+    } catch (error) {
+      localStorage.removeItem(storageKey);
+    }
+
+    document.getElementById("saveButton").addEventListener("click", function () {
+      const values = editableCells.map(function (cell) {
+        return cell.textContent.trim();
+      });
+      localStorage.setItem(storageKey, JSON.stringify(values));
+      saveStatus.textContent = "저장됨";
+      window.setTimeout(function () {
+        saveStatus.textContent = "";
+      }, 1800);
+    });
+
     document.getElementById("printButton").addEventListener("click", function () {
       window.print();
     });
