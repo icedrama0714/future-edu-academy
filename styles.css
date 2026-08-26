@@ -1381,6 +1381,38 @@ h2 {
   color: #246344;
 }
 
+.attendance-class-status.one-click {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #b9c5bd;
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.attendance-class-status.one-click:hover:not(:disabled) {
+  border-color: #6b8d77;
+  background: #edf6f0;
+}
+
+.attendance-class-status.one-click.active {
+  border-color: #2f7952;
+  background: #edf6f0;
+}
+
+.attendance-class-status.one-click:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.attendance-class-tools.teacher-one-click {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .attendance-class-actions {
   display: flex;
   flex-wrap: wrap;
