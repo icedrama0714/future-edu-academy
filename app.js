@@ -1349,6 +1349,22 @@ function currentTimeText() {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
+function normalizeAttendanceClassSession(session = {}) {
+  return {
+    id: session.id || createId(),
+    subject: String(session.subject || "").trim(),
+    startTime: session.startTime || "",
+    endTime: session.endTime || "",
+  };
+}
+
+function normalizeAttendanceClassSessions(sessions = []) {
+  return (Array.isArray(sessions) ? sessions : [])
+    .map(normalizeAttendanceClassSession)
+    .filter((session) => session.subject && session.startTime)
+    .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+}
+
 function normalizeAttendanceRecord(record = {}) {
   const status = record.status === "결석" ? "결석" : "등원";
   return {
@@ -1358,6 +1374,7 @@ function normalizeAttendanceRecord(record = {}) {
     arrivalTime: record.arrivalTime || "",
     departureTime: record.departureTime || "",
     absentReason: String(record.absentReason || "").trim(),
+    classSessions: normalizeAttendanceClassSessions(record.classSessions),
   };
 }
 
@@ -6597,6 +6614,66 @@ function upsertAttendanceRecord(student, nextRecord) {
   student.absentDays = attendanceRecordsForMonth(student).filter((record) => record.status === "결석").length;
 }
 
+function attendanceSubjectOptions(student) {
+  return uniqueValues((student.subjects || []).flatMap((subject) => {
+    if (subject !== "공필왕") return [subject];
+    const details = (student.gongpilSubjects || []).filter(Boolean);
+    return details.length ? details.map((detail) => `공필왕 ${detail}`) : [subject];
+  }));
+}
+
+function activeAttendanceClassSession(record = {}) {
+  return [...normalizeAttendanceClassSessions(record.classSessions)]
+    .reverse()
+    .find((session) => !session.endTime);
+}
+
+function closeOpenAttendanceClassSessions(sessions = [], endTime = currentTimeText()) {
+  return normalizeAttendanceClassSessions(sessions).map((session) => (
+    session.endTime ? session : { ...session, endTime }
+  ));
+}
+
+function attendanceClassSessionSummary(record = {}, emptyText = "수업기록 없음") {
+  const sessions = normalizeAttendanceClassSessions(record.classSessions);
+  if (!sessions.length) return emptyText;
+  return sessions.map((session) => (
+    `${session.subject} ${session.startTime}~${session.endTime || "진행중"}`
+  )).join(" · ");
+}
+
+function switchAttendanceClass(studentId, subject = "", dateText = currentDateText()) {
+  const student = students.find((item) => item.id === studentId);
+  if (!student) return;
+  if (dateText !== currentDateText()) {
+    alert("과목 수업 버튼은 오늘 기록에서만 사용할 수 있습니다. 지난 기록은 상세에서 수정해주세요.");
+    return;
+  }
+  const record = attendanceRecordOnDate(student, dateText);
+  if (!record || record.status !== "등원" || !record.arrivalTime) {
+    alert("먼저 학생을 등원 처리해주세요.");
+    return;
+  }
+  if (record.departureTime) {
+    alert("이미 하원한 학생입니다. 하원시간을 지운 뒤 다시 기록해주세요.");
+    return;
+  }
+
+  const now = currentTimeText();
+  const activeSession = activeAttendanceClassSession(record);
+  const nextSessions = closeOpenAttendanceClassSessions(record.classSessions, now);
+  if (subject && activeSession?.subject !== subject) {
+    nextSessions.push({ id: createId(), subject, startTime: now, endTime: "" });
+  }
+
+  upsertAttendanceRecord(student, { ...record, classSessions: nextSessions });
+  selectedAttendanceDate = dateText;
+  saveStudents();
+  const actionLabel = subject && activeSession?.subject !== subject ? `${subject} 시작` : "대기 전환";
+  addChangeLog("등원관리", actionLabel, `${student.studentName || "이름 없음"} · ${dateText} ${now}`);
+  renderAll();
+}
+
 function quickAttendance(studentId, action, dateText = currentDateText()) {
   const student = students.find((item) => item.id === studentId);
   if (!student) return;
@@ -6613,10 +6690,12 @@ function quickAttendance(studentId, action, dateText = currentDateText()) {
   if (action === "leave") {
     nextRecord.arrivalTime = nextRecord.arrivalTime || currentTimeText();
     nextRecord.departureTime = currentTimeText();
+    nextRecord.classSessions = closeOpenAttendanceClassSessions(nextRecord.classSessions, nextRecord.departureTime);
   }
   if (action === "absent") {
     nextRecord.arrivalTime = "";
     nextRecord.departureTime = "";
+    nextRecord.classSessions = [];
   }
 
   upsertAttendanceRecord(student, nextRecord);
@@ -6699,6 +6778,7 @@ function recordTabletCheckin(studentIds) {
     if (checkinMode === "leave") {
       nextRecord.arrivalTime = nextRecord.arrivalTime || now;
       nextRecord.departureTime = now;
+      nextRecord.classSessions = closeOpenAttendanceClassSessions(nextRecord.classSessions, now);
     }
     upsertAttendanceRecord(student, nextRecord);
     queueKakaoAttendanceMessage(student, checkinMode, checkinMode === "leave" ? nextRecord.departureTime : nextRecord.arrivalTime, today);
@@ -6786,18 +6866,52 @@ function renderCheckinScreen() {
   }
 }
 
+function attendanceClassSessionEditorRow(student, session = {}) {
+  const normalized = normalizeAttendanceClassSession(session);
+  const options = uniqueValues([
+    ...attendanceSubjectOptions(student),
+    normalized.subject,
+  ]).filter(Boolean);
+  return `
+    <div class="attendance-session-edit-row" data-attendance-session-row data-session-id="${escapeHtml(normalized.id)}">
+      <select data-session-field="subject" aria-label="수업과목">
+        <option value="">과목 선택</option>
+        ${options.map((subject) => `<option value="${escapeHtml(subject)}" ${normalized.subject === subject ? "selected" : ""}>${escapeHtml(subject)}</option>`).join("")}
+      </select>
+      <input data-session-field="startTime" type="time" value="${escapeHtml(normalized.startTime)}" aria-label="수업 시작시간" />
+      <input data-session-field="endTime" type="time" value="${escapeHtml(normalized.endTime)}" aria-label="수업 종료시간" />
+      <button class="mini-danger-button" type="button" data-attendance-session-remove>삭제</button>
+    </div>
+  `;
+}
+
+function attendanceClassSessionsFromPanel(panel) {
+  return Array.from(panel.querySelectorAll("[data-attendance-session-row]"))
+    .map((row) => ({
+      id: row.dataset.sessionId || createId(),
+      subject: row.querySelector("[data-session-field='subject']")?.value || "",
+      startTime: row.querySelector("[data-session-field='startTime']")?.value || "",
+      endTime: row.querySelector("[data-session-field='endTime']")?.value || "",
+    }))
+    .filter((session) => session.subject && session.startTime);
+}
+
 function saveAttendanceDetail(studentId) {
   const student = students.find((item) => item.id === studentId);
   const panel = document.querySelector(`[data-attendance-detail-id="${studentId}"]`);
   if (!student || !panel) return;
   const status = panel.querySelector("[data-attendance-field='status']").value;
   const arrivalInput = panel.querySelector("[data-attendance-field='arrivalTime']").value;
+  const departureTime = status === "등원" ? panel.querySelector("[data-attendance-field='departureTime']").value : "";
+  let classSessions = status === "등원" ? attendanceClassSessionsFromPanel(panel) : [];
+  if (departureTime) classSessions = closeOpenAttendanceClassSessions(classSessions, departureTime);
   const nextRecord = {
     date: panel.querySelector("[data-attendance-field='date']").value,
     status,
     arrivalTime: status === "등원" ? (arrivalInput || currentTimeText()) : "",
-    departureTime: status === "등원" ? panel.querySelector("[data-attendance-field='departureTime']").value : "",
+    departureTime,
     absentReason: status === "결석" ? panel.querySelector("[data-attendance-field='absentReason']").value.trim() : "",
+    classSessions,
   };
   if (!nextRecord.date) {
     alert("날짜를 선택해주세요.");
@@ -6860,6 +6974,18 @@ function attendanceDetailHtml(student, monthRecords, editDate = selectedAttendan
           <button class="primary-button" type="button" data-attendance-save="${escapeHtml(student.id)}">기록 저장</button>
         </div>
       </div>
+      <section class="attendance-session-editor">
+        <div class="attendance-session-editor-head">
+          <div>
+            <strong>과목별 수업기록</strong>
+            <span>시작·종료시간을 직접 수정할 수 있습니다.</span>
+          </div>
+          <button class="mini-button" type="button" data-attendance-session-add="${escapeHtml(student.id)}">수업 추가</button>
+        </div>
+        <div class="attendance-session-edit-list" data-attendance-session-list>
+          ${normalizeAttendanceClassSessions(selectedRecord.classSessions).map((session) => attendanceClassSessionEditorRow(student, session)).join("")}
+        </div>
+      </section>
       <div class="attendance-record-list">
         ${monthRecords.length ? monthRecords.map((record) => `
           <div class="attendance-record-row">
@@ -6867,7 +6993,7 @@ function attendanceDetailHtml(student, monthRecords, editDate = selectedAttendan
             <span>${escapeHtml(record.status)}</span>
             <span>등원 ${escapeHtml(record.arrivalTime || "-")}</span>
             <span>하원 ${escapeHtml(record.departureTime || "-")}</span>
-            <span>${escapeHtml(record.absentReason || "")}</span>
+            <span class="attendance-record-sessions">${escapeHtml(record.status === "결석" ? (record.absentReason || "결석") : attendanceClassSessionSummary(record))}</span>
             <button class="mini-danger-button" type="button" data-attendance-delete="${escapeHtml(student.id)}" data-attendance-date="${escapeHtml(record.date)}">삭제</button>
           </div>
         `).join("") : `<p class="empty-feedback">이번 달 등원기록이 없습니다.</p>`}
@@ -6945,6 +7071,34 @@ function attendanceModeLabel() {
   if (attendanceListMode === "todayAbsent") return "결석명단";
   if (attendanceListMode === "todayWaiting") return "대기명단";
   return "등원명단";
+}
+
+function attendanceClassControlsHtml(student, record, dateText) {
+  const subjects = attendanceSubjectOptions(student);
+  const activeSession = activeAttendanceClassSession(record);
+  const isToday = dateText === currentDateText();
+  const canTrack = isToday && record?.status === "등원" && record.arrivalTime && !record.departureTime;
+  const statusText = record?.status === "등원"
+    ? attendanceClassSessionSummary(record, record.departureTime ? "수업기록 없음" : "현재 대기")
+    : "등원 후 과목을 선택하세요";
+  return `
+    <div class="attendance-class-tools">
+      <div class="attendance-class-status ${activeSession ? "active" : ""}">
+        <strong>${activeSession ? `${escapeHtml(activeSession.subject)} 수업중` : "수업기록"}</strong>
+        <span>${escapeHtml(statusText)}</span>
+      </div>
+      <div class="attendance-class-actions" aria-label="과목 수업 전환">
+        ${subjects.length ? subjects.map((subject) => `
+          <button class="subject-session-button ${activeSession?.subject === subject ? "active" : ""}" type="button"
+            data-attendance-class="${escapeHtml(student.id)}" data-attendance-subject="${escapeHtml(subject)}"
+            data-attendance-date="${escapeHtml(dateText)}" ${canTrack ? "" : "disabled"}
+            aria-pressed="${activeSession?.subject === subject ? "true" : "false"}">${escapeHtml(subject)}</button>
+        `).join("") : `<span class="small-text">학생관리에서 학습과목을 등록해주세요.</span>`}
+        <button class="subject-session-button wait ${canTrack && !activeSession ? "active" : ""}" type="button"
+          data-attendance-wait="${escapeHtml(student.id)}" data-attendance-date="${escapeHtml(dateText)}" ${canTrack ? "" : "disabled"}>대기</button>
+      </div>
+    </div>
+  `;
 }
 
 function renderAttendanceCalendar(month) {
@@ -7028,6 +7182,7 @@ function renderAttendanceOverview() {
             <button class="mini-button" type="button" data-attendance-leave="${escapeHtml(student.id)}" data-attendance-date="${escapeHtml(selectedAttendanceDate)}">하원</button>
             <button class="mini-danger-button" type="button" data-attendance-absent="${escapeHtml(student.id)}" data-attendance-date="${escapeHtml(selectedAttendanceDate)}">결석</button>
           </div>
+          ${attendanceClassControlsHtml(student, selectedRecord, selectedAttendanceDate)}
           ${isOpen ? attendanceDetailHtml(student, monthRecords, selectedAttendanceDate) : ""}
         </article>
       `;
@@ -7084,6 +7239,42 @@ function bindAttendanceEvents() {
     });
   });
 
+  $("attendanceOverview").querySelectorAll("[data-attendance-class]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      switchAttendanceClass(
+        button.dataset.attendanceClass,
+        button.dataset.attendanceSubject,
+        button.dataset.attendanceDate || selectedAttendanceDate,
+      );
+    });
+  });
+
+  $("attendanceOverview").querySelectorAll("[data-attendance-wait]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      switchAttendanceClass(
+        button.dataset.attendanceWait,
+        "",
+        button.dataset.attendanceDate || selectedAttendanceDate,
+      );
+    });
+  });
+
+  $("attendanceOverview").querySelectorAll("[data-attendance-session-add]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const student = students.find((item) => item.id === button.dataset.attendanceSessionAdd);
+      const panel = button.closest("[data-attendance-detail-id]");
+      const list = panel?.querySelector("[data-attendance-session-list]");
+      if (!student || !list) return;
+      list.insertAdjacentHTML("beforeend", attendanceClassSessionEditorRow(student, { startTime: currentTimeText() }));
+      bindAttendanceSessionRemoveEvents(panel);
+    });
+  });
+
+  bindAttendanceSessionRemoveEvents($("attendanceOverview"));
+
   $("attendanceOverview").querySelectorAll("[data-attendance-save]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -7095,6 +7286,17 @@ function bindAttendanceEvents() {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
       deleteAttendanceRecord(button.dataset.attendanceDelete, button.dataset.attendanceDate);
+    });
+  });
+}
+
+function bindAttendanceSessionRemoveEvents(root) {
+  root?.querySelectorAll("[data-attendance-session-remove]").forEach((button) => {
+    if (button.dataset.bound === "true") return;
+    button.dataset.bound = "true";
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      button.closest("[data-attendance-session-row]")?.remove();
     });
   });
 }
