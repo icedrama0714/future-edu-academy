@@ -38,6 +38,11 @@ const GONGPIL_SUBJECTS = [
   "세계사",
 ];
 
+const STAFF_SUBJECTS = [
+  ...SUBJECTS,
+  ...GONGPIL_SUBJECTS.map((subject) => `공필왕 ${subject}`),
+];
+
 const PAYMENT_METHOD_OPTIONS = ["카드결제", "제로페이", "계좌이체", "현금"];
 const PAYMENT_TYPE_OPTIONS = ["정규 교육비", "추가 수강", "분납", "이월", "교재비", "환불", "기타"];
 
@@ -1163,6 +1168,7 @@ function normalizeUserAccount(account = {}) {
     name: displayName,
     displayName: String(account.displayName || "").trim(),
     role,
+    defaultSubject: STAFF_SUBJECTS.includes(account.defaultSubject) ? account.defaultSubject : "",
     password: String(account.password || ""),
     workRecords: Array.isArray(account.workRecords)
       ? account.workRecords.map(normalizeStaffWorkRecord).sort((a, b) => (b.date || "").localeCompare(a.date || ""))
@@ -1959,6 +1965,7 @@ function clearStaffAccountForm() {
   if ($("staffNameInput")) $("staffNameInput").value = "";
   if ($("staffDisplayNameInput")) $("staffDisplayNameInput").value = "";
   if ($("staffRoleInput")) $("staffRoleInput").value = "teacher";
+  if ($("staffDefaultSubjectInput")) $("staffDefaultSubjectInput").value = "";
   if ($("staffPasswordInput")) $("staffPasswordInput").value = "";
 }
 
@@ -1971,6 +1978,9 @@ function saveStaffAccount() {
   const name = ($("staffNameInput")?.value || "").trim();
   const displayName = ($("staffDisplayNameInput")?.value || "").trim();
   const role = ["director", "teacher", "desk"].includes($("staffRoleInput")?.value) ? $("staffRoleInput").value : "teacher";
+  const defaultSubject = role === "teacher" && STAFF_SUBJECTS.includes($("staffDefaultSubjectInput")?.value)
+    ? $("staffDefaultSubjectInput").value
+    : "";
   const password = ($("staffPasswordInput")?.value || "").trim();
   if (!name) {
     alert("직원 이름을 입력해주세요.");
@@ -1996,6 +2006,7 @@ function saveStaffAccount() {
     name,
     displayName,
     role,
+    defaultSubject,
     password,
     workRecords: existing?.workRecords || [],
   });
@@ -2019,6 +2030,7 @@ function editStaffAccount(id) {
   $("staffNameInput").value = account.name || "";
   $("staffDisplayNameInput").value = account.displayName || "";
   $("staffRoleInput").value = account.role || "teacher";
+  $("staffDefaultSubjectInput").value = account.defaultSubject || "";
   $("staffPasswordInput").value = account.password || "";
   $("staffNameInput").focus();
 }
@@ -2075,7 +2087,7 @@ function renderStaffAccounts() {
       <article class="staff-account-item">
         <div>
           <strong>${escapeHtml(account.name || "이름 없음")}</strong>
-          <span>${escapeHtml(roleLabel(account.role))} · 표시 ${escapeHtml(staffPublicName(account))} · 비밀번호 ${account.password ? "등록됨" : "미등록"}</span>
+          <span>${escapeHtml(roleLabel(account.role))} · 표시 ${escapeHtml(staffPublicName(account))} · 자동과목 ${escapeHtml(account.defaultSubject || "미지정")} · 비밀번호 ${account.password ? "등록됨" : "미등록"}</span>
           <p>이번 달 근태 ${staffRecordsForMonth(account).length}건</p>
         </div>
         <div class="row-actions">
@@ -2267,6 +2279,9 @@ function initOptions() {
   if ($("bookFeeEffectiveFrom")) $("bookFeeEffectiveFrom").value = currentDateText();
   if ($("bookFeeSubject")) $("bookFeeSubject").innerHTML = SUBJECTS.map((subject) => `<option>${subject}</option>`).join("");
   if ($("courseHistorySubject")) $("courseHistorySubject").innerHTML = SUBJECTS.map((subject) => `<option>${subject}</option>`).join("");
+  if ($("staffDefaultSubjectInput")) {
+    $("staffDefaultSubjectInput").innerHTML = `<option value="">선택 안 함</option>${STAFF_SUBJECTS.map((subject) => `<option value="${escapeHtml(subject)}">${escapeHtml(subject)}</option>`).join("")}`;
+  }
   if ($("courseHistoryDate")) $("courseHistoryDate").value = currentDateText();
   if ($("bookStockDate")) $("bookStockDate").value = currentDateText();
   if ($("archiveMonthFilter")) $("archiveMonthFilter").value = currentMonthText();
@@ -6622,6 +6637,12 @@ function attendanceSubjectOptions(student) {
   }));
 }
 
+function currentTeacherAutomaticSubject() {
+  const account = currentStaffAccount();
+  if (!account || account.role !== "teacher") return "";
+  return STAFF_SUBJECTS.includes(account.defaultSubject) ? account.defaultSubject : "";
+}
+
 function activeAttendanceClassSession(record = {}) {
   return [...normalizeAttendanceClassSessions(record.classSessions)]
     .reverse()
@@ -7076,11 +7097,34 @@ function attendanceModeLabel() {
 function attendanceClassControlsHtml(student, record, dateText) {
   const subjects = attendanceSubjectOptions(student);
   const activeSession = activeAttendanceClassSession(record);
+  const teacherSubject = currentTeacherAutomaticSubject();
+  const isTeacherAccount = currentStaffAccount()?.role === "teacher";
+  const teacherCanTeachStudent = teacherSubject && subjects.includes(teacherSubject);
   const isToday = dateText === currentDateText();
   const canTrack = isToday && record?.status === "등원" && record.arrivalTime && !record.departureTime;
   const statusText = record?.status === "등원"
     ? attendanceClassSessionSummary(record, record.departureTime ? "수업기록 없음" : "현재 대기")
     : "등원 후 과목을 선택하세요";
+  if (isTeacherAccount) {
+    const teacherStatusText = !teacherSubject
+      ? "직원관리에서 자동 수업과목을 설정해주세요."
+      : !teacherCanTeachStudent
+        ? `이 원생의 학습과목에 ${teacherSubject}이(가) 없습니다.`
+        : activeSession?.subject === teacherSubject
+          ? `${teacherSubject} ${activeSession.startTime}~진행중 · 다시 누르면 종료`
+          : `${teacherSubject} 수업을 한 번 눌러 시작`;
+    const teacherCanClick = canTrack && teacherCanTeachStudent;
+    return `
+      <div class="attendance-class-tools teacher-one-click">
+        <button class="attendance-class-status one-click ${activeSession?.subject === teacherSubject ? "active" : ""}" type="button"
+          data-attendance-class="${escapeHtml(student.id)}" data-attendance-subject="${escapeHtml(teacherSubject)}"
+          data-attendance-date="${escapeHtml(dateText)}" ${teacherCanClick ? "" : "disabled"}>
+          <strong>${activeSession?.subject === teacherSubject ? `${escapeHtml(teacherSubject)} 수업 종료` : "수업기록"}</strong>
+          <span>${escapeHtml(teacherStatusText)}</span>
+        </button>
+      </div>
+    `;
+  }
   return `
     <div class="attendance-class-tools">
       <div class="attendance-class-status ${activeSession ? "active" : ""}">
