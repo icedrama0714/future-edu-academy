@@ -1348,6 +1348,80 @@ h2 {
   justify-content: flex-end;
 }
 
+.attendance-class-tools {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 2fr);
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.attendance-class-status {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.attendance-class-status strong {
+  font-size: 13px;
+}
+
+.attendance-class-status span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attendance-class-status.active strong {
+  color: #246344;
+}
+
+.attendance-class-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.subject-session-button {
+  min-height: 30px;
+  border: 1px solid #b9c5bd;
+  border-radius: 6px;
+  padding: 5px 9px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.subject-session-button:hover:not(:disabled) {
+  border-color: #6b8d77;
+  background: #edf6f0;
+}
+
+.subject-session-button.active {
+  border-color: #2f7952;
+  background: #2f7952;
+  color: #fff;
+}
+
+.subject-session-button.wait.active {
+  border-color: #777f7a;
+  background: #777f7a;
+}
+
+.subject-session-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
 .attendance-detail {
   grid-column: 1 / -1;
   display: grid;
@@ -1372,6 +1446,49 @@ h2 {
   display: flex;
   align-items: end;
   justify-content: flex-end;
+}
+
+.attendance-session-editor {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f8faf8;
+}
+
+.attendance-session-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.attendance-session-editor-head > div {
+  display: grid;
+  gap: 2px;
+}
+
+.attendance-session-editor-head span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.attendance-session-edit-list {
+  display: grid;
+  gap: 6px;
+}
+
+.attendance-session-edit-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 110px 110px auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.attendance-session-edit-row select,
+.attendance-session-edit-row input {
+  min-width: 0;
 }
 
 .attendance-record-list {
@@ -3712,7 +3829,9 @@ legend {
 
   .attendance-item,
   .attendance-edit-grid,
-  .attendance-record-row {
+  .attendance-record-row,
+  .attendance-class-tools,
+  .attendance-session-edit-row {
     grid-template-columns: 1fr;
   }
 
@@ -3721,8 +3840,13 @@ legend {
   }
 
   .attendance-quick-actions,
-  .attendance-save-row {
+  .attendance-save-row,
+  .attendance-class-actions {
     justify-content: stretch;
+  }
+
+  .subject-session-button {
+    flex: 1 1 auto;
   }
 
   .payment-card-head {
