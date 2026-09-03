@@ -178,6 +178,9 @@
             <select id="subjectFilter" aria-label="과목 필터">
               <option value="">전체 과목</option>
             </select>
+            <select id="studentStatusFilter" aria-label="재원 상태 필터">
+              <option value="">전체 상태</option><option>재원</option><option>휴원</option><option>대기</option>
+            </select>
           </div>
 
           <div class="table-wrap">
@@ -205,7 +208,10 @@
                 <p class="eyebrow">학생 상세</p>
                 <h2 id="formTitle">신규 등록</h2>
               </div>
-              <button class="mini-danger-button withdraw-button" id="leaveBtn" type="button">퇴회</button>
+              <div class="student-status-actions">
+                <button class="ghost-button hidden" id="pauseStudentBtn" type="button">휴원</button>
+                <button class="mini-danger-button withdraw-button" id="leaveBtn" type="button">퇴회</button>
+              </div>
             </div>
 
             <div class="detail-empty" id="studentDetailEmpty">
@@ -223,6 +229,16 @@
               <label>
                 학생명
                 <input id="studentName" required autocomplete="off" />
+              </label>
+              <label>
+                등록 구분
+                <select id="recordType" aria-describedby="recordTypeHelp">
+                  <option value="auto">자동 구분</option>
+                  <option value="student">원생 (인원 포함)</option>
+                  <option value="staff">선생님·직원 (인원 제외)</option>
+                  <option value="test">테스트 (인원 제외)</option>
+                </select>
+                <span id="recordTypeHelp" class="small-text">test·테스트와 직원 유형은 자동 제외됩니다. 선생님을 이름으로 등록했다면 선생님·직원을 선택하세요. 기록은 유지됩니다.</span>
               </label>
               <label>
                 학교
@@ -311,6 +327,10 @@
                 퇴회일
                 <input id="leaveDate" type="date" />
               </label>
+              <label class="wide">
+                퇴회 사유 / 참고사항
+                <textarea id="withdrawalReason" rows="2" placeholder="확인된 사유나 참고사항을 적어주세요. 모르면 비워두세요."></textarea>
+              </label>
               <label>
                 상태
                 <select id="enrollmentStatus">
@@ -331,6 +351,10 @@
               </label>
             </fieldset>
 
+            <details class="student-pause-history">
+              <summary>휴원·복귀 이력 <span id="pauseHistoryCount">0건</span></summary>
+              <div id="pauseHistoryList"></div>
+            </details>
             <div class="form-actions">
               <button class="ghost-button" id="resetBtn" type="button">초기화</button>
               <button class="primary-button" type="submit">저장</button>
@@ -1451,6 +1475,22 @@
 
         <section class="view-section" id="archiveView" data-view-section="archive" aria-label="자료보관">
           <section class="archive-grid">
+            <section class="management-panel archive-wide" aria-labelledby="withdrawalArchiveTitle">
+              <div class="panel-head">
+                <div><p class="eyebrow">퇴회 학생 기록</p><h2 id="withdrawalArchiveTitle">퇴회 기록 보관함</h2></div>
+                <strong id="withdrawalArchiveCount" aria-live="polite">0건</strong>
+              </div>
+              <p class="archive-note">퇴회 처리할 때 학생정보, 수강이력, 출결, 납부, 상담·학습 기록을 별도로 보관합니다. 재입회하거나 학생 목록에서 삭제해도 보관된 기록은 남습니다.</p>
+              <p class="archive-note">현재 자료는 이 컴퓨터의 이 브라우저에 저장됩니다. 브라우저 자료 삭제나 컴퓨터 변경에 대비하려면 전체 백업을 따로 저장해주세요.</p>
+              <div class="withdrawal-filters">
+                <label>학생 검색<input id="withdrawalSearch" type="search" placeholder="이름, 학교, 연락처, 퇴회 사유" /></label>
+                <label>퇴회 연도<select id="withdrawalYear"><option value="">전체 연도</option></select></label>
+                <button class="ghost-button" id="archiveExistingWithdrawalsBtn" type="button">기존 퇴회 기록 보관</button>
+              </div>
+              <p id="withdrawalArchiveStatus" role="status" class="archive-note"></p>
+              <div id="withdrawalArchiveList" class="withdrawal-list"></div>
+              <section id="withdrawalArchiveDetail" class="withdrawal-detail hidden" aria-label="퇴회 기록 상세" tabindex="-1"></section>
+            </section>
             <section class="management-panel">
               <div class="panel-head">
                 <div>
@@ -1497,6 +1537,19 @@
       </div>
     </div>
 
+    <dialog id="pauseStudentDialog" class="pause-dialog" aria-labelledby="pauseDialogTitle">
+      <form id="pauseStudentForm">
+        <h2 id="pauseDialogTitle">휴원 처리</h2>
+        <p id="pauseDialogStudent"></p>
+        <label><span id="pauseActionDateLabel">휴원 시작일</span><input id="pauseActionDate" type="date" required /></label>
+        <label id="pauseExpectedReturnLabel">복귀 예정일 (선택)<input id="pauseExpectedReturn" type="date" /></label>
+        <label><span id="pauseReasonLabel">휴원 사유 / 참고사항 (선택)</span><textarea id="pauseReason" rows="3"></textarea></label>
+        <p class="archive-note" id="pauseDialogNote">저장하면 휴원 상태로 바뀝니다. 복귀 예정일이 지나도 자동 복귀하지 않으며, 복귀 버튼으로 처리합니다.</p>
+        <p id="pauseDialogError" role="alert"></p>
+        <div class="archive-actions"><button class="ghost-button" id="cancelPauseStudentBtn" type="button">취소</button><button class="primary-button" id="savePauseStudentBtn" type="submit">휴원 저장</button></div>
+      </form>
+    </dialog>
+
     <div class="login-screen hidden" id="loginScreen" role="dialog" aria-modal="true" aria-label="로그인">
       <div class="login-card">
         <div>
@@ -1517,6 +1570,11 @@
     </div>
 
     <script src="./assets/payment-history-generated.js"></script>
+    <script src="./withdrawal-records.js"></script>
     <script src="./app.js"></script>
+    <script src="./withdrawal-integration.js"></script>
+    <script src="./student-pause.js"></script>
+    <script src="./student-counts.js"></script>
+    <script src="./student-visibility.js"></script>
   </body>
 </html>

@@ -3916,3 +3916,46 @@ legend {
     grid-template-columns: 1fr;
   }
 }
+/* Read-only withdrawal archive, kept separate from the editable student form. */
+.withdrawal-filters { display: flex; gap: 14px; align-items: end; flex-wrap: wrap; margin: 18px 0; }
+.withdrawal-filters label { display: grid; gap: 6px; min-width: 140px; }
+.withdrawal-filters label:first-child { flex: 1; min-width: 220px; }
+.withdrawal-list { display: grid; gap: 12px; }
+.withdrawal-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px; border: 1px solid #dbe5db; border-radius: 12px; background: #f8fbf8; }
+.withdrawal-card h3 { margin: 0 0 6px; font-size: 18px; }
+.withdrawal-card p { margin: 4px 0; overflow-wrap: anywhere; }
+.withdrawal-detail { margin-top: 24px; padding: 24px; border: 1px solid #c9d9cb; border-radius: 12px; background: white; }
+.withdrawal-detail header { margin-top: 20px; padding-bottom: 14px; border-bottom: 2px solid #476c53; }
+.withdrawal-detail h2 { font-size: 24px; }
+.withdrawal-section { margin-top: 28px; }
+.withdrawal-section h3 { padding-bottom: 8px; border-bottom: 1px solid #dbe5db; }
+.withdrawal-values { margin: 0; }
+.withdrawal-values > div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; padding: 8px 0; border-bottom: 1px solid #e8eee8; }
+.withdrawal-values dt { font-weight: 600; }
+.withdrawal-values dd { margin: 0; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.withdrawal-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.withdrawal-entry { padding: 14px; margin: 14px 0; border: 1px solid #e2e9e2; background: #f7f9f7; }
+.withdrawal-entry h4 { margin: 0 0 10px; }
+.withdrawal-photo { max-width: 100%; max-height: 500px; object-fit: contain; }
+.withdrawal-warning { padding: 12px; background: #fff5db; }
+@media (max-width: 640px) {
+  .withdrawal-card { align-items: start; flex-direction: column; }
+  .withdrawal-values > div { grid-template-columns: 1fr; gap: 4px; }
+  .withdrawal-detail { padding: 14px; }
+}
+/* Temporary pauses retain enrollment details and can be repeated. */
+.student-status-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.student-pause-history { padding: 14px; margin: 16px 0; border: 1px solid #dbe5db; border-radius: 10px; }
+.student-pause-history summary { font-weight: 600; cursor: pointer; }
+.student-pause-history article { padding: 12px 0; border-bottom: 1px solid #e8eee8; }
+.student-pause-history article:last-child { border: 0; }
+.student-pause-history p { margin: 5px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.name-cell .pause-state-badge { display: inline-block; margin-left: 8px; padding: 2px 7px; background: #fff0cc; color: #78510c; border-radius: 6px; font-size: 12px; }
+.pause-dialog { width: min(480px, calc(100vw - 32px)); max-height: 90vh; overflow: auto; border: 1px solid #c9d9cb; border-radius: 14px; padding: 24px; color: var(--ink); }
+.pause-dialog::backdrop { background: #17201877; }
+.pause-dialog form { display: grid; gap: 14px; }
+.pause-dialog label { display: grid; gap: 6px; }
+.pause-dialog h2, .pause-dialog p { margin: 0; }
+#pauseDialogError { color: var(--danger); }
+.filters:has(#studentStatusFilter) { grid-template-columns: minmax(180px, 1fr) repeat(3, minmax(100px, auto)); }
+@media (max-width: 900px) { .filters:has(#studentStatusFilter) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
