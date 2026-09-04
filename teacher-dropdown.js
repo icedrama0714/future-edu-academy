@@ -1,4 +1,11 @@
 // Keeps the saved teacher text compatible while replacing free text with a staff-backed dropdown.
+const DEFAULT_TEACHER_OPTIONS = [
+  { value: "박지민", subject: "미래엔 영어" },
+  { value: "박민진", subject: "소한이 한글" },
+  { value: "원지영", subject: "중등 수학" },
+  { value: "박민영", subject: "원장" },
+];
+
 function selectedTeacherSubjects() {
   const selected = Array.from(document.querySelectorAll("input[name='subjects']:checked")).map((item) => item.value);
   if (selected.includes("공필왕")) {
@@ -9,12 +16,16 @@ function selectedTeacherSubjects() {
 }
 
 function teacherAccountsForDropdown(subjects = []) {
-  return userAccounts
-    .filter((account) => account.role === "teacher")
+  return [
+    ...DEFAULT_TEACHER_OPTIONS,
+    ...userAccounts
+    .filter((account) => ["teacher", "director"].includes(account.role))
     .map((account) => ({
       value: staffPublicName(account),
       subject: STAFF_SUBJECTS.includes(account.defaultSubject) ? account.defaultSubject : "",
     }))
+    .filter((item) => !["선생님", "원장"].includes(item.value)),
+  ]
     .filter((item, index, items) => item.value && items.findIndex((candidate) => candidate.value === item.value) === index)
     .sort((a, b) => {
       const aMatched = a.subject && subjects.includes(a.subject) ? 0 : 1;
