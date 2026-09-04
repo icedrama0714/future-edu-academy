@@ -1,9 +1,19 @@
-// Keeps the saved teacher text compatible while replacing free text with a staff-backed dropdown.
-const DEFAULT_TEACHER_OPTIONS = [
-  { value: "박지민", subject: "미래엔 영어" },
-  { value: "박민진", subject: "소한이 한글" },
-  { value: "원지영", subject: "중등 수학" },
-  { value: "박민영", subject: "원장" },
+// Uses the existing teacher field as a subject-only assignment dropdown.
+const LEGACY_TEACHER_SUBJECTS = {
+  박지민: "미래엔 영어",
+  "영어 박지민": "미래엔 영어",
+  박민진: "소한이+요리수",
+  "한글 박민진": "소한이+요리수",
+  원지영: "중등 수학",
+  "중등수학 원지영": "중등 수학",
+  박민영: "소한이+요리수",
+  "원장 박민영": "소한이+요리수",
+  "소한이 한글": "소한이+요리수",
+};
+
+const ASSIGNMENT_SUBJECTS = [
+  ...SUBJECTS.filter((subject) => subject !== "소한이 한글"),
+  "소한이+요리수",
 ];
 
 function selectedTeacherSubjects() {
@@ -15,41 +25,34 @@ function selectedTeacherSubjects() {
   return uniqueValues(selected);
 }
 
-function teacherAccountsForDropdown(subjects = []) {
-  return [
-    ...DEFAULT_TEACHER_OPTIONS,
-    ...userAccounts
-    .filter((account) => ["teacher", "director"].includes(account.role))
-    .map((account) => ({
-      value: staffPublicName(account),
-      subject: STAFF_SUBJECTS.includes(account.defaultSubject) ? account.defaultSubject : "",
-    }))
-    .filter((item) => !["선생님", "원장"].includes(item.value)),
-  ]
-    .filter((item, index, items) => item.value && items.findIndex((candidate) => candidate.value === item.value) === index)
+function teacherSubjectsForDropdown(selectedSubjects = []) {
+  const normalizedSelectedSubjects = selectedSubjects.map((subject) => (
+    subject === "소한이 한글" ? "소한이+요리수" : subject
+  ));
+  return uniqueValues([
+    ...ASSIGNMENT_SUBJECTS,
+    ...normalizedSelectedSubjects.filter((subject) => subject.startsWith("공필왕 ")),
+  ])
     .sort((a, b) => {
-      const aMatched = a.subject && subjects.includes(a.subject) ? 0 : 1;
-      const bMatched = b.subject && subjects.includes(b.subject) ? 0 : 1;
-      return aMatched - bMatched || a.value.localeCompare(b.value, "ko");
+      const aMatched = normalizedSelectedSubjects.includes(a) ? 0 : 1;
+      const bMatched = normalizedSelectedSubjects.includes(b) ? 0 : 1;
+      return aMatched - bMatched || a.localeCompare(b, "ko");
     });
 }
 
 function syncTeacherDropdown(selectedValue = $("teacher")?.value || "") {
   const select = $("teacher");
   if (!select) return;
-  const subjects = selectedTeacherSubjects();
-  const options = teacherAccountsForDropdown(subjects);
-  if (selectedValue && !options.some((item) => item.value === selectedValue)) {
-    options.unshift({ value: selectedValue, subject: "기존 지정" });
-  }
+  const selectedSubjects = selectedTeacherSubjects();
+  const options = teacherSubjectsForDropdown(selectedSubjects);
+  const normalizedValue = options.includes(selectedValue)
+    ? selectedValue
+    : LEGACY_TEACHER_SUBJECTS[selectedValue] || "";
   select.innerHTML = [
     `<option value="">선택 안 함</option>`,
-    ...options.map((item) => {
-      const subject = item.subject || "과목 미지정";
-      return `<option value="${escapeHtml(item.value)}">${escapeHtml(subject)} · ${escapeHtml(item.value)}</option>`;
-    }),
+    ...options.map((subject) => `<option value="${escapeHtml(subject)}">${escapeHtml(subject)}</option>`),
   ].join("");
-  select.value = selectedValue;
+  select.value = normalizedValue;
 }
 
 const teacherDropdownOriginalFillForm = fillForm;
