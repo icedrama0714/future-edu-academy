@@ -15,6 +15,7 @@ const LEGACY_TEACHER_LABELS = {
   "한글 박민진": "한글선생님",
   "소한이 한글": "한글선생님",
   "소한이+요리수": "한글선생님",
+  "국어+수학": "한글선생님",
 };
 
 function normalizeResponsibleTeacher(value = "") {
@@ -42,13 +43,18 @@ function syncTeacherDropdown(selectedValue = $("teacher")?.value || "") {
 const teacherDropdownOriginalFillForm = fillForm;
 fillForm = function (student) {
   teacherDropdownOriginalFillForm(student);
-  syncTeacherDropdown(student.teacher || "");
+  const assignedTeacher = (student.subjects || []).includes("국어+수학")
+    ? "한글선생님"
+    : student.teacher || "";
+  syncTeacherDropdown(assignedTeacher);
 };
 
 function migrateResponsibleTeacherLabels() {
   let changed = false;
   students.forEach((student) => {
-    const normalized = normalizeResponsibleTeacher(student.teacher);
+    const normalized = (student.subjects || []).includes("국어+수학")
+      ? "한글선생님"
+      : normalizeResponsibleTeacher(student.teacher);
     if (RESPONSIBLE_TEACHERS.includes(normalized) && normalized !== student.teacher) {
       student.teacher = normalized;
       changed = true;
@@ -57,6 +63,12 @@ function migrateResponsibleTeacherLabels() {
   if (changed) saveStudents();
   return changed;
 }
+
+document.querySelectorAll("input[name='subjects']").forEach((input) => {
+  input.addEventListener("change", () => {
+    if (input.value === "국어+수학" && input.checked) syncTeacherDropdown("한글선생님");
+  });
+});
 
 migrateResponsibleTeacherLabels();
 renderAll();
