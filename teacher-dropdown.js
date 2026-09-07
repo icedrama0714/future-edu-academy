@@ -80,3 +80,10 @@ if (!document.querySelector("script[data-payment-cycle]")) {
   paymentCycleScript.dataset.paymentCycle = "true";
   document.body.appendChild(paymentCycleScript);
 }
+
+if (!document.querySelector("script[data-benefit-records]")) {
+  const benefitRecordsScript = document.createElement("script");
+  benefitRecordsScript.src = "./benefit-records.js";
+  benefitRecordsScript.dataset.benefitRecords = "true";
+  document.body.appendChild(benefitRecordsScript);
+}
