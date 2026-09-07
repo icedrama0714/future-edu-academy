@@ -102,3 +102,15 @@ renderStats = function () {
 
 document.getElementById("todayPaymentDueCard")?.addEventListener("click", openCurrentMonthUnpaidPayments);
 renderAll();
+
+const paymentDueActions = document.querySelector(".today-shortcut-actions");
+if (paymentDueActions && !document.getElementById("todayPaymentDueCard")) {
+  const paymentDueButton = document.createElement("button");
+  paymentDueButton.className = "today-shortcut-button payment";
+  paymentDueButton.id = "todayPaymentDueCard";
+  paymentDueButton.type = "button";
+  paymentDueButton.innerHTML = `<span>수납대상</span><strong id="todayPaymentDueCount">0</strong>`;
+  paymentDueActions.appendChild(paymentDueButton);
+  paymentDueButton.addEventListener("click", openCurrentMonthUnpaidPayments);
+  renderStats();
+}
