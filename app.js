@@ -406,7 +406,7 @@ function normalizeBookFees(bookFees = [], fallbackTitle = "", fallbackAmount = 0
   return normalized;
 }
 
-const SUBJECT_FINANCE_GROUPS = ["미래엔 영어", "중등 수학", "고등 수학", "유치초저", "미래엔 수학", "문해력", "공필왕", "기타", "배분 필요"];
+const SUBJECT_FINANCE_GROUPS = ["미래엔 영어", "중등 수학", "고등 수학", "유치초저", "국어+수학", "미래엔 수학", "문해력", "공필왕", "기타", "배분 필요"];
 
 function normalizeSubjectAllocations(subjectAllocations = []) {
   return (Array.isArray(subjectAllocations) ? subjectAllocations : [])
@@ -5135,6 +5135,7 @@ function studentForPaymentRecord(record = {}) {
 
 function subjectFinanceGroupsForText(rawText, student = {}) {
   const text = String(rawText || "").replace(/\s+/g, "").toLowerCase();
+  if (text.includes("국어+수학") || text.includes("국어수학")) return ["국어+수학"];
   const groups = [];
   const lowerStudent = isLowerGradeStudent(student);
   const schoolGradeText = `${student.school || ""} ${student.grade || ""}`;
