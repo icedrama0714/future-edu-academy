@@ -174,7 +174,7 @@ function prepaymentScheduleFromForm(index) {
 function savePrepaymentFromForm(event) {
   event.preventDefault();
   const studentId = document.getElementById("prepaymentStudentId")?.value || "";
-  const student = students.find((item) => item.id === studentId);
+  const student = students.find((item) => String(item.id) === studentId);
   const paymentDate = document.getElementById("prepaymentPaymentDate")?.value || "";
   const paymentMethod = document.getElementById("prepaymentPaymentMethod")?.value || "";
   const originalAmount = Number(document.getElementById("prepaymentOriginalAmount")?.value || 0);
@@ -274,7 +274,7 @@ function renderPrepaymentPanel() {
         <label class="prepayment-memo">메모<textarea id="prepaymentMemo" rows="3" placeholder="결제 구성이나 과목 변경 내용을 기록하세요."></textarea></label>
         <div class="prepayment-form-actions">
           <small>이 기록은 현재 브라우저에만 비공개로 저장됩니다.</small>
-          <button class="primary" type="submit">선납금 저장</button>
+          <button class="primary" id="prepaymentSaveBtn" type="button">선납금 저장</button>
         </div>
       </form>
     </details>
@@ -317,7 +317,7 @@ function renderPrepaymentPanel() {
       `;
     }).join("") : `<p class="empty-feedback">등록된 선납금이 없습니다.</p>`}
   `;
-  document.getElementById("prepaymentEntryForm")?.addEventListener("submit", savePrepaymentFromForm);
+  document.getElementById("prepaymentSaveBtn")?.addEventListener("click", savePrepaymentFromForm);
   panel.querySelectorAll("[data-prepayment-delete]").forEach((button) => {
     button.addEventListener("click", () => deletePrepaymentAccount(button.dataset.prepaymentDelete));
   });
