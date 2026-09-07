@@ -66,7 +66,7 @@ hasPaymentRecordInMonth = hasRegularPaymentRecordInMonth;
 
 function paymentCarryoverSourceMonths(student, currentMonth) {
   const sourceMonths = new Set();
-  const allRecords = paymentRecordsForCarrryoverStudent(student);
+  const allRecords = paymentRecordsForCarryoverStudent(student);
 
   allRecords.forEach((record) => {
     const recordMonth = recordMonthText(record);
@@ -88,7 +88,7 @@ function paymentCarryoverSourceMonths(student, currentMonth) {
       ? joinMonth
       : PAYMENT_CARRYOVER_START_MONTH;
     paymentMonthsBefore(startMonth, currentMonth).forEach((month) => sourceMonths.add(month));
-  })
+  }
 
   return [...sourceMonths].sort();
 }
@@ -111,7 +111,7 @@ function paymentCarryoverRecords() {
 
       const sourcePaymentName = unpaidRecords.map((record) => record.paymentName).filter(Boolean).join("+")
         || paymentNameFromStudent(student)
-        || "교육비 (�
+        || "교육비";
       const sourceLabel = `${Number(sourceMonth.slice(5, 7))}월 미납 이월`;
       return {
         ...paymentRecord(student.studentName, {
