@@ -73,3 +73,10 @@ document.querySelectorAll("input[name='subjects']").forEach((input) => {
 migrateResponsibleTeacherLabels();
 renderAll();
 syncTeacherDropdown();
+
+if (!document.querySelector("script[data-payment-cycle]")) {
+  const paymentCycleScript = document.createElement("script");
+  paymentCycleScript.src = "./payment-cycle.js";
+  paymentCycleScript.dataset.paymentCycle = "true";
+  document.body.appendChild(paymentCycleScript);
+}
