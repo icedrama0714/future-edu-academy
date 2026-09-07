@@ -821,9 +821,10 @@ const sampleStudents = [
   rosterStudent({ name: "황아진", school: "화정초", age: 10, phone: "010-9697-0957", paymentDay: 25, tuition: 330000, days: "월, 화, 수", join: "20260228" }),
 ];
 
-const OFFICIAL_JOIN_DATES_BY_NAME = new Map(
-  sampleStudents.map((student) => [canonicalStudentName(student.studentName), student.joinDate])
+const OFFICIAL_JOIN_DATES_BY_STUDENT = new Map(
+  sampleStudents.map((student) => [studentIdentityKey(student), student.joinDate])
 );
+const JOIN_DATE_COLLISION_FIX_KEY = "academy-join-date-collision-fix-20260907";
 
 let students = loadStudents();
 let standalonePaymentRecords = loadStandalonePaymentRecords();
@@ -1394,6 +1395,15 @@ function canonicalStudentName(name) {
   return STUDENT_NAME_CORRECTIONS[trimmed] || trimmed;
 }
 
+function studentIdentityKey(student = {}) {
+  return [student.studentName, student.school, student.grade]
+    .map((value, index) => {
+      const text = index === 0 ? canonicalStudentName(value) : String(value || "").trim();
+      return text.replace(/\s+/g, "");
+    })
+    .join("|");
+}
+
 function assignedSubjectsForStudent(name) {
   const canonicalName = canonicalStudentName(name);
   return Object.entries(SUBJECT_ASSIGNMENTS)
@@ -1723,18 +1733,29 @@ function saveBookStockRecords() {
 
 function cleanupDuplicatePaymentRecords() {
   let changed = false;
+  const shouldRepairJoinDateCollision = !localStorage.getItem(JOIN_DATE_COLLISION_FIX_KEY);
   students = students.map((student) => {
-    const officialJoinDate = OFFICIAL_JOIN_DATES_BY_NAME.get(canonicalStudentName(student.studentName));
+    const officialJoinDate = OFFICIAL_JOIN_DATES_BY_STUDENT.get(studentIdentityKey(student));
     const before = JSON.stringify(student.paymentRecords || []);
     const paymentRecords = uniquePaymentRecords(student.paymentRecords || []);
+    const isSeoYoonCollision = shouldRepairJoinDateCollision
+      && canonicalStudentName(student.studentName) === "이서윤"
+      && String(student.school || "").replace(/\s+/g, "").includes("분성초")
+      && ["초2", "2학년"].includes(String(student.grade || "").replace(/\s+/g, ""))
+      && student.joinDate === "2026-06-01";
+    const joinDate = isSeoYoonCollision ? currentDateText() : (officialJoinDate || student.joinDate);
     if (before !== JSON.stringify(paymentRecords)) changed = true;
-    if (officialJoinDate && student.joinDate !== officialJoinDate) changed = true;
+    if (student.joinDate !== joinDate) changed = true;
     return {
       ...student,
-      joinDate: officialJoinDate || student.joinDate,
+      joinDate,
       paymentRecords,
     };
   });
+
+  if (shouldRepairJoinDateCollision) {
+    localStorage.setItem(JOIN_DATE_COLLISION_FIX_KEY, "1");
+  }
 
   const standaloneBefore = JSON.stringify(standalonePaymentRecords || []);
   standalonePaymentRecords = uniquePaymentRecords((standalonePaymentRecords || [])
