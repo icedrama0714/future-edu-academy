@@ -117,7 +117,7 @@ if (paymentDueActions && !document.getElementById("todayPaymentDueCard")) {
 
 if (!document.querySelector("script[data-payment-carryover]")) {
   const paymentCarryoverScript = document.createElement("script");
-  paymentCarryoverScript.src = "./payment-carryover.js?v=20260907-4";
+  paymentCarryoverScript.src = "./payment-carryover.js?v=20260907-5";
   paymentCarryoverScript.dataset.paymentCarryover = "true";
   document.body.appendChild(paymentCarryoverScript);
 }

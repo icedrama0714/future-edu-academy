@@ -2275,6 +2275,61 @@ h2 {
   line-height: 1.55;
 }
 
+.prepayment-separate-fees {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #f0d8b7;
+  border-radius: 7px;
+  background: #fffaf3;
+}
+
+.prepayment-separate-fees-title,
+.prepayment-separate-fee-row {
+  display: grid;
+  grid-template-columns: 110px minmax(220px, 1fr) 120px 70px;
+  gap: 10px;
+  align-items: center;
+}
+
+.prepayment-separate-fees-title {
+  grid-template-columns: 1fr auto;
+  color: #85520f;
+}
+
+.prepayment-separate-fees-title span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.prepayment-separate-fee-row {
+  padding-top: 8px;
+  border-top: 1px solid #f3e5d2;
+  font-size: 13px;
+}
+
+.prepayment-separate-fee-row > strong {
+  text-align: right;
+}
+
+.prepayment-separate-fee-row > b {
+  padding: 4px 7px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.prepayment-separate-fee-row > b.unpaid {
+  background: #fde8e7;
+  color: var(--danger);
+}
+
+.prepayment-separate-fee-row > b.paid {
+  background: #e5f5ea;
+  color: var(--accent-dark);
+}
+
 @media (max-width: 760px) {
   .prepayment-panel-head,
   .prepayment-card-title {
@@ -2299,6 +2354,16 @@ h2 {
 
   .prepayment-history-table > div {
     grid-template-columns: 72px 1fr;
+  }
+
+  .prepayment-separate-fees-title,
+  .prepayment-separate-fee-row {
+    grid-template-columns: 1fr;
+  }
+
+  .prepayment-separate-fee-row > strong,
+  .prepayment-separate-fee-row > b {
+    text-align: left;
   }
 
   .prepayment-history-head {

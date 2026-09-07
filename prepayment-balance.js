@@ -115,7 +115,51 @@ function prepaymentAccountForRecord(record = {}) {
 
 function prepaymentCoversOnlyTuition(record = {}) {
   const text = `${record.paymentType || ""} ${record.paymentName || ""} ${record.memo || ""}`;
-  return !/교재|교재비|책/.test(text);
+  const recordedBookFees = Math.max(
+    (record.bookFees || []).reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    Number(record.bookFeeAmount || 0)
+  );
+  return record.paymentType !== "교재비" && recordedBookFees <= 0 && !/교재비|교재대|책값|도서비/.test(text);
+}
+
+function prepaymentRecordBelongsToAccount(record = {}, account = {}) {
+  return Boolean(
+    (record.studentId && account.studentId && String(record.studentId) === String(account.studentId)) ||
+    (
+      canonicalStudentName(record.studentName) === canonicalStudentName(account.studentName) &&
+      (!account.school || !record.school || String(record.school).includes(account.school))
+    )
+  );
+}
+
+function prepaymentSeparateFeeRecords(account, throughMonth = currentMonthText()) {
+  return allPaymentRecords()
+    .filter((record) => prepaymentRecordBelongsToAccount(record, account))
+    .filter((record) => !prepaymentCoversOnlyTuition(record))
+    .filter((record) => {
+      const month = recordMonthText(record);
+      return month && month >= account.startMonth && month <= throughMonth;
+    })
+    .map((record) => {
+      const recordedBookFees = Math.max(
+        (record.bookFees || []).reduce((sum, item) => sum + Number(item.amount || 0), 0),
+        Number(record.bookFeeAmount || 0)
+      );
+      const standaloneBookFee = Math.max(
+        Number(record.unpaidAmount || 0),
+        Number(record.tuition || 0),
+        Number(record.bookFeeAmount || 0)
+      );
+      return {
+        id: record.id,
+        month: recordMonthText(record),
+        title: bookFeeSummary(record) || record.paymentName || "교재비",
+        amount: recordedBookFees > 0 ? recordedBookFees : standaloneBookFee,
+        status: paymentRecordStatus(record),
+      };
+    })
+    .filter((record) => record.amount > 0)
+    .sort((a, b) => a.month.localeCompare(b.month));
 }
 
 function applyPrepaymentToUpcomingRecord(record) {
@@ -297,6 +341,7 @@ function renderPrepaymentPanel() {
     </details>
     ${activeAccounts.length ? activeAccounts.map((account) => {
       const rows = prepaymentUsageRows(account);
+      const separateFees = prepaymentSeparateFeeRecords(account);
       const usedAmount = rows.reduce((sum, row) => sum + row.usedAmount, 0);
       const balance = Math.max(0, Number(account.originalAmount || 0) - usedAmount);
       return `
@@ -339,6 +384,22 @@ function renderPrepaymentPanel() {
               `).join("")}
             </div>
           </details>
+          ${separateFees.length ? `
+            <div class="prepayment-separate-fees">
+              <div class="prepayment-separate-fees-title">
+                <strong>선납금과 별도 비용</strong>
+                <span>선납 잔액에서 차감하지 않음</span>
+              </div>
+              ${separateFees.map((fee) => `
+                <div class="prepayment-separate-fee-row">
+                  <span>${escapeHtml(prepaymentMonthLabel(fee.month))}</span>
+                  <span>${escapeHtml(fee.title)}</span>
+                  <strong>${money(fee.amount)}</strong>
+                  <b class="${fee.status === "미납" ? "unpaid" : "paid"}">${escapeHtml(fee.status)}</b>
+                </div>
+              `).join("")}
+            </div>
+          ` : ""}
           <p>${escapeHtml(account.memo || "")}</p>
         </article>
       `;
