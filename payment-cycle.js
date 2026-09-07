@@ -114,3 +114,10 @@ if (paymentDueActions && !document.getElementById("todayPaymentDueCard")) {
   paymentDueButton.addEventListener("click", openCurrentMonthUnpaidPayments);
   renderStats();
 }
+
+if (!document.querySelector("script[data-payment-carryover]")) {
+  const paymentCarryoverScript = document.createElement("script");
+  paymentCarryoverScript.src = "./payment-carryover.js";
+  paymentCarryoverScript.dataset.paymentCarryover = "true";
+  document.body.appendChild(paymentCarryoverScript);
+}
