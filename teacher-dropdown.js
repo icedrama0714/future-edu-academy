@@ -1,58 +1,42 @@
-// Uses the existing teacher field as a subject-only assignment dropdown.
-const LEGACY_TEACHER_SUBJECTS = {
-  박지민: "미래엔 영어",
-  "영어 박지민": "미래엔 영어",
-  박민진: "소한이+요리수",
-  "한글 박민진": "소한이+요리수",
-  원지영: "중등 수학",
-  "중등수학 원지영": "중등 수학",
-  박민영: "소한이+요리수",
-  "원장 박민영": "소한이+요리수",
-  "소한이 한글": "소한이+요리수",
+// Keeps the existing teacher field while showing simple role-based teacher names.
+const RESPONSIBLE_TEACHERS = ["원장", "영어선생님", "중등수학선생님", "한글선생님"];
+
+const LEGACY_TEACHER_LABELS = {
+  박민영: "원장",
+  "원장 박민영": "원장",
+  박지민: "영어선생님",
+  "영어 박지민": "영어선생님",
+  "미래엔 영어": "영어선생님",
+  원지영: "중등수학선생님",
+  "중등수학 원지영": "중등수학선생님",
+  "중등 수학": "중등수학선생님",
+  "고등 수학": "중등수학선생님",
+  박민진: "한글선생님",
+  "한글 박민진": "한글선생님",
+  "소한이 한글": "한글선생님",
+  "소한이+요리수": "한글선생님",
 };
 
-const ASSIGNMENT_SUBJECTS = [
-  ...SUBJECTS.filter((subject) => subject !== "소한이 한글"),
-  "소한이+요리수",
-];
-
-function selectedTeacherSubjects() {
-  const selected = Array.from(document.querySelectorAll("input[name='subjects']:checked")).map((item) => item.value);
-  if (selected.includes("공필왕")) {
-    Array.from(document.querySelectorAll("input[name='gongpilSubjects']:checked"))
-      .forEach((item) => selected.push(`공필왕 ${item.value}`));
-  }
-  return uniqueValues(selected);
-}
-
-function teacherSubjectsForDropdown(selectedSubjects = []) {
-  const normalizedSelectedSubjects = selectedSubjects.map((subject) => (
-    subject === "소한이 한글" ? "소한이+요리수" : subject
-  ));
-  return uniqueValues([
-    ...ASSIGNMENT_SUBJECTS,
-    ...normalizedSelectedSubjects.filter((subject) => subject.startsWith("공필왕 ")),
-  ])
-    .sort((a, b) => {
-      const aMatched = normalizedSelectedSubjects.includes(a) ? 0 : 1;
-      const bMatched = normalizedSelectedSubjects.includes(b) ? 0 : 1;
-      return aMatched - bMatched || a.localeCompare(b, "ko");
-    });
+function normalizeResponsibleTeacher(value = "") {
+  const text = String(value || "").trim();
+  if (!text || RESPONSIBLE_TEACHERS.includes(text)) return text;
+  if (LEGACY_TEACHER_LABELS[text]) return LEGACY_TEACHER_LABELS[text];
+  if (text.includes("박민영") || text.includes("원장")) return "원장";
+  if (text.includes("박지민") || text.includes("영어")) return "영어선생님";
+  if (text.includes("원지영") || text.includes("중등수학") || text.includes("중등 수학")) return "중등수학선생님";
+  if (text.includes("박민진") || text.includes("한글") || text.includes("소한이") || text.includes("요리수")) return "한글선생님";
+  return text;
 }
 
 function syncTeacherDropdown(selectedValue = $("teacher")?.value || "") {
   const select = $("teacher");
   if (!select) return;
-  const selectedSubjects = selectedTeacherSubjects();
-  const options = teacherSubjectsForDropdown(selectedSubjects);
-  const normalizedValue = options.includes(selectedValue)
-    ? selectedValue
-    : LEGACY_TEACHER_SUBJECTS[selectedValue] || "";
+  const normalizedValue = normalizeResponsibleTeacher(selectedValue);
   select.innerHTML = [
     `<option value="">선택 안 함</option>`,
-    ...options.map((subject) => `<option value="${escapeHtml(subject)}">${escapeHtml(subject)}</option>`),
+    ...RESPONSIBLE_TEACHERS.map((teacherName) => `<option value="${escapeHtml(teacherName)}">${escapeHtml(teacherName)}</option>`),
   ].join("");
-  select.value = normalizedValue;
+  select.value = RESPONSIBLE_TEACHERS.includes(normalizedValue) ? normalizedValue : "";
 }
 
 const teacherDropdownOriginalFillForm = fillForm;
@@ -61,13 +45,19 @@ fillForm = function (student) {
   syncTeacherDropdown(student.teacher || "");
 };
 
-const teacherDropdownOriginalRenderStaffAccounts = renderStaffAccounts;
-renderStaffAccounts = function () {
-  teacherDropdownOriginalRenderStaffAccounts();
-  syncTeacherDropdown();
-};
+function migrateResponsibleTeacherLabels() {
+  let changed = false;
+  students.forEach((student) => {
+    const normalized = normalizeResponsibleTeacher(student.teacher);
+    if (RESPONSIBLE_TEACHERS.includes(normalized) && normalized !== student.teacher) {
+      student.teacher = normalized;
+      changed = true;
+    }
+  });
+  if (changed) saveStudents();
+  return changed;
+}
 
-document.querySelectorAll("input[name='subjects'], input[name='gongpilSubjects']").forEach((input) => {
-  input.addEventListener("change", () => syncTeacherDropdown());
-});
+migrateResponsibleTeacherLabels();
+renderAll();
 syncTeacherDropdown();
