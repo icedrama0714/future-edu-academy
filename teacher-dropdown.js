@@ -76,7 +76,7 @@ syncTeacherDropdown();
 
 if (!document.querySelector("script[data-payment-cycle]")) {
   const paymentCycleScript = document.createElement("script");
-  paymentCycleScript.src = "./payment-cycle.js";
+  paymentCycleScript.src = "./payment-cycle.js?v=20260907-1";
   paymentCycleScript.dataset.paymentCycle = "true";
   document.body.appendChild(paymentCycleScript);
 }

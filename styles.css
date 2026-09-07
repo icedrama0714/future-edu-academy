@@ -2043,6 +2043,143 @@ h2 {
   margin-top: 12px;
 }
 
+.prepayment-panel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #cfe1d4;
+  border-radius: 10px;
+  background: #f7fbf8;
+}
+
+.prepayment-panel-head,
+.prepayment-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.prepayment-panel-head h3 {
+  margin: 2px 0 0;
+  font-size: 18px;
+}
+
+.prepayment-note,
+.prepayment-card-title span,
+.prepayment-card > p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.prepayment-card {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #dce8df;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.prepayment-card-title > div {
+  display: grid;
+  gap: 3px;
+}
+
+.prepayment-card-title strong {
+  font-size: 17px;
+}
+
+.prepayment-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.prepayment-summary > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 7px;
+  background: #f3f6f4;
+}
+
+.prepayment-summary span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.prepayment-summary strong {
+  font-size: 17px;
+}
+
+.prepayment-summary .balance {
+  background: #e5f5ea;
+  color: var(--accent-dark);
+}
+
+.prepayment-history {
+  margin-top: 12px;
+}
+
+.prepayment-history summary {
+  min-height: 40px;
+  align-content: center;
+  color: var(--accent-dark);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.prepayment-history-table {
+  display: grid;
+  gap: 6px;
+}
+
+.prepayment-history-table > div {
+  display: grid;
+  grid-template-columns: 90px minmax(220px, 1fr) 120px 120px;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border-radius: 6px;
+  background: #f7f8f7;
+  font-size: 13px;
+}
+
+.prepayment-history-table strong,
+.prepayment-history-table b {
+  text-align: right;
+}
+
+.prepayment-history-table b {
+  color: var(--accent-dark);
+}
+
+.prepayment-card > p {
+  margin: 12px 0 0;
+  line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+  .prepayment-panel-head,
+  .prepayment-card-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .prepayment-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .prepayment-history-table > div {
+    grid-template-columns: 72px 1fr;
+  }
+
+  .prepayment-history-table strong,
+  .prepayment-history-table b {
+    text-align: left;
+  }
+}
+
 .payment-table-tools {
   display: grid;
   grid-template-columns: minmax(150px, 0.28fr) minmax(240px, 1fr);
