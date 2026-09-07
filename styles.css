@@ -2217,13 +2217,48 @@ h2 {
 
 .prepayment-history-table > div {
   display: grid;
-  grid-template-columns: 90px minmax(220px, 1fr) 120px 120px;
+  grid-template-columns: 110px minmax(240px, 1fr) 120px 120px;
   gap: 10px;
   align-items: center;
   padding: 9px 10px;
   border-radius: 6px;
   background: #f7f8f7;
   font-size: 13px;
+}
+
+.prepayment-history-head {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.prepayment-history-row {
+  border: 1px solid #edf1ee;
+  background: #fff !important;
+}
+
+.prepayment-history-month {
+  font-weight: 800;
+}
+
+.prepayment-history-items {
+  display: grid;
+  gap: 6px;
+}
+
+.prepayment-history-items > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.prepayment-history-items em {
+  color: var(--ink);
+  font-style: normal;
+}
+
+.prepayment-history-items strong {
+  white-space: nowrap;
 }
 
 .prepayment-history-table strong,
@@ -2264,6 +2299,22 @@ h2 {
 
   .prepayment-history-table > div {
     grid-template-columns: 72px 1fr;
+  }
+
+  .prepayment-history-head {
+    display: none !important;
+  }
+
+  .prepayment-history-used::before {
+    content: "총 차감 ";
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .prepayment-history-balance::before {
+    content: "차감 후 잔액 ";
+    color: var(--muted);
+    font-weight: 700;
   }
 
   .prepayment-history-table strong,

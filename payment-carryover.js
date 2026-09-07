@@ -160,7 +160,7 @@ renderAll();
 
 if (!document.querySelector("script[data-prepayment-balance]")) {
   const prepaymentBalanceScript = document.createElement("script");
-  prepaymentBalanceScript.src = "./prepayment-balance.js?v=20260907-3";
+  prepaymentBalanceScript.src = "./prepayment-balance.js?v=20260907-4";
   prepaymentBalanceScript.dataset.prepaymentBalance = "true";
   document.body.appendChild(prepaymentBalanceScript);
 }

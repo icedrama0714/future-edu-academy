@@ -48,6 +48,17 @@ function prepaymentUsageRows(account, throughMonth = currentMonthText()) {
     const monthlyCharge = prepaymentChargeForMonth(account, month);
     if (monthlyCharge > 0) {
       const usedAmount = Math.min(remaining, monthlyCharge);
+      let unallocatedAmount = usedAmount;
+      const items = prepaymentScheduleItemsForMonth(account, month).map((item) => {
+        const scheduledAmount = Number(item.monthlyAmount || 0);
+        const appliedAmount = Math.min(unallocatedAmount, scheduledAmount);
+        unallocatedAmount -= appliedAmount;
+        return {
+          label: item.label || "교육비",
+          scheduledAmount,
+          appliedAmount,
+        };
+      }).filter((item) => item.appliedAmount > 0);
       remaining -= usedAmount;
       rows.push({
         month,
@@ -55,12 +66,18 @@ function prepaymentUsageRows(account, throughMonth = currentMonthText()) {
         usedAmount,
         remainingAmount: remaining,
         label: prepaymentScheduleLabel(account, month),
+        items,
       });
     }
     month = prepaymentMonthShift(month, 1);
     guard += 1;
   }
   return rows;
+}
+
+function prepaymentMonthLabel(month) {
+  const [year, monthNumber] = String(month || "").split("-");
+  return year && monthNumber ? `${year}년 ${Number(monthNumber)}월` : month;
 }
 
 function prepaymentUsedThrough(account, month = currentMonthText()) {
@@ -302,12 +319,22 @@ function renderPrepaymentPanel() {
           <details class="prepayment-history">
             <summary>월별 차감 ${rows.length}건 보기</summary>
             <div class="prepayment-history-table">
+              <div class="prepayment-history-head">
+                <span>차감월</span>
+                <span>과목별 차감</span>
+                <span>총 차감액</span>
+                <span>차감 후 잔액</span>
+              </div>
               ${rows.map((row) => `
-                <div>
-                  <span>${escapeHtml(row.month)}</span>
-                  <span>${escapeHtml(row.label)}</span>
-                  <strong>-${money(row.usedAmount)}</strong>
-                  <b>${money(row.remainingAmount)}</b>
+                <div class="prepayment-history-row">
+                  <span class="prepayment-history-month">${escapeHtml(prepaymentMonthLabel(row.month))}</span>
+                  <span class="prepayment-history-items">
+                    ${(row.items || []).map((item) => `
+                      <span><em>${escapeHtml(item.label)}</em><strong>${money(item.appliedAmount)}</strong></span>
+                    `).join("")}
+                  </span>
+                  <strong class="prepayment-history-used">-${money(row.usedAmount)}</strong>
+                  <b class="prepayment-history-balance">${money(row.remainingAmount)}</b>
                 </div>
               `).join("")}
             </div>
