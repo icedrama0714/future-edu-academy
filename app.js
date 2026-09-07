@@ -3064,6 +3064,12 @@ function switchView(view) {
   document.querySelectorAll(".side-nav button[data-view]").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === view);
   });
+  const activeNavButton = document.querySelector(`.side-nav button[data-view="${view}"]`);
+  const activeNavFolder = activeNavButton?.closest(".nav-folder");
+  if (activeNavFolder) {
+    activeNavFolder.open = true;
+    activeNavFolder.querySelector(":scope > summary")?.setAttribute("aria-expanded", "true");
+  }
 
   const titles = {
     dashboard: "",
@@ -7938,7 +7944,41 @@ function readFeedbackPhoto(file) {
   reader.readAsDataURL(file);
 }
 
+function bindSideNavigation() {
+  document.querySelectorAll(".nav-folder").forEach((folder) => {
+    const summary = folder.querySelector(":scope > summary");
+    if (!summary) return;
+    summary.setAttribute("aria-expanded", String(folder.open));
+    summary.addEventListener("click", (event) => {
+      event.preventDefault();
+      folder.open = !folder.open;
+      summary.setAttribute("aria-expanded", String(folder.open));
+    });
+  });
+
+  document.querySelectorAll(".side-nav button[data-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.view === "students") {
+        studentListMode = "all";
+        clearStudentListFilters();
+        clearStudentDetail();
+      }
+      if (button.dataset.view === "attendance") {
+        attendanceTodayOnly = false;
+        attendanceListMode = "all";
+      }
+      if (button.dataset.view === "payments") {
+        resetPaymentOverviewFilters();
+      }
+      switchView(button.dataset.view);
+      if (button.dataset.view === "attendance") renderAttendanceOverview();
+      if (button.dataset.view === "checkin") renderCheckinScreen();
+    });
+  });
+}
+
 function bindEvents() {
+  bindSideNavigation();
   $("homeButton")?.addEventListener("click", () => switchView("dashboard"));
   $("loginBtn")?.addEventListener("click", login);
   $("loginPassword")?.addEventListener("keydown", (event) => {
@@ -8075,25 +8115,6 @@ function bindEvents() {
   });
   document.querySelectorAll("[data-student-tab]").forEach((button) => {
     button.addEventListener("click", () => switchStudentTab(button.dataset.studentTab));
-  });
-  document.querySelectorAll(".side-nav button[data-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (button.dataset.view === "students") {
-        studentListMode = "all";
-        clearStudentListFilters();
-        clearStudentDetail();
-      }
-      if (button.dataset.view === "attendance") {
-        attendanceTodayOnly = false;
-        attendanceListMode = "all";
-      }
-      if (button.dataset.view === "payments") {
-        resetPaymentOverviewFilters();
-      }
-      switchView(button.dataset.view);
-      if (button.dataset.view === "attendance") renderAttendanceOverview();
-      if (button.dataset.view === "checkin") renderCheckinScreen();
-    });
   });
   ["searchInput", "gradeFilter", "subjectFilter"].forEach((id) => {
     $(id).addEventListener("input", () => {
