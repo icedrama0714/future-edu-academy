@@ -2071,6 +2071,87 @@ h2 {
   font-size: 13px;
 }
 
+.prepayment-entry {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #dce8df;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.prepayment-entry > summary {
+  cursor: pointer;
+  color: var(--accent-dark);
+  font-weight: 800;
+}
+
+.prepayment-entry form {
+  margin-top: 14px;
+}
+
+.prepayment-form-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.prepayment-form-grid label,
+.prepayment-schedule-row label,
+.prepayment-memo {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.prepayment-schedule-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.prepayment-schedule-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(120px, 1fr));
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.prepayment-schedule-row legend {
+  padding: 0 6px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.prepayment-memo {
+  margin-top: 12px;
+}
+
+.prepayment-form-actions,
+.prepayment-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.prepayment-form-actions {
+  margin-top: 12px;
+}
+
+.prepayment-form-actions small {
+  color: var(--muted);
+}
+
+.prepayment-card-actions button {
+  min-height: 30px;
+  padding: 5px 9px;
+}
+
 .prepayment-card {
   margin-top: 14px;
   padding: 16px;
@@ -2168,6 +2249,17 @@ h2 {
 
   .prepayment-summary {
     grid-template-columns: 1fr;
+  }
+
+  .prepayment-form-grid,
+  .prepayment-schedule-row {
+    grid-template-columns: 1fr;
+  }
+
+  .prepayment-form-actions,
+  .prepayment-card-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .prepayment-history-table > div {

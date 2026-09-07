@@ -21,17 +21,22 @@ function prepaymentMonthShift(month, offset) {
   return `${shifted.getFullYear()}-${String(shifted.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function prepaymentChargeForMonth(account, month) {
-  const schedule = (account.schedule || []).find((item) => (
+function prepaymentScheduleItemsForMonth(account, month) {
+  return (account.schedule || []).filter((item) => (
     item.fromMonth <= month && (!item.toMonth || month <= item.toMonth)
   ));
-  return Number(schedule?.monthlyAmount || 0);
+}
+
+function prepaymentChargeForMonth(account, month) {
+  return prepaymentScheduleItemsForMonth(account, month)
+    .reduce((sum, item) => sum + Number(item.monthlyAmount || 0), 0);
 }
 
 function prepaymentScheduleLabel(account, month) {
-  return (account.schedule || []).find((item) => (
-    item.fromMonth <= month && (!item.toMonth || month <= item.toMonth)
-  ))?.label || "교육비";
+  return prepaymentScheduleItemsForMonth(account, month)
+    .map((item) => item.label)
+    .filter(Boolean)
+    .join(" + ") || "교육비";
 }
 
 function prepaymentUsageRows(account, throughMonth = currentMonthText()) {
@@ -120,55 +125,6 @@ function applyPrepaymentToUpcomingRecord(record) {
   };
 }
 
-function seedAnSeoheePrepayment() {
-  const existing = prepaymentAccounts.some((account) => (
-    canonicalStudentName(account.studentName) === "안서희" && String(account.school || "").includes("분성중")
-  ));
-  if (!existing) {
-    const student = students.find((item) => (
-      canonicalStudentName(item.studentName) === "안서희" && String(item.school || "").includes("분성중")
-    ));
-    prepaymentAccounts.push({
-      id: "prepayment-an-seohee-20260225",
-      studentId: student?.id || "",
-      studentName: "안서희",
-      school: "분성중",
-      grade: student?.grade || "중2",
-      paymentDate: "2026-02-25",
-      paymentMethod: "카드결제",
-      originalAmount: 10560000,
-      startMonth: "2026-03",
-      active: true,
-      memo: "3월분 교육비 납부일에 1년치 선납. 과목 변경 후 환불 없이 잔액에서 계속 차감.",
-      schedule: [
-        {
-          fromMonth: "2026-03",
-          toMonth: "2026-06",
-          monthlyAmount: 880000,
-          label: "중등 수학 23만 + 중등 영어 23만 + 공필왕 국어·세계사·과학 각 8만 + 문해력 18만",
-        },
-        {
-          fromMonth: "2026-07",
-          toMonth: "",
-          monthlyAmount: 460000,
-          label: "중등 수학 23만 + 중등 영어 23만",
-        },
-      ],
-    });
-    savePrepaymentAccounts();
-    addChangeLog("납부관리", "선납금 등록", "안서희 · 2026-02-25 카드결제 · 10,560,000원");
-  }
-
-  const student = students.find((item) => (
-    canonicalStudentName(item.studentName) === "안서희" && String(item.school || "").includes("분성중")
-  ));
-  if (student && recurringPaymentCycleDayForStudent(student) !== 25) {
-    student.paymentCycleDay = 25;
-    student.paymentDueDate = recurringPaymentDueDate(student);
-    saveStudents();
-  }
-}
-
 function ensurePrepaymentPanel() {
   if (document.getElementById("prepaymentBalancePanel")) return;
   const paymentOverview = document.getElementById("paymentOverview");
@@ -178,6 +134,100 @@ function ensurePrepaymentPanel() {
   panel.className = "prepayment-panel";
   panel.setAttribute("aria-label", "선납금 잔액");
   paymentOverview.before(panel);
+}
+
+function prepaymentStudentOptions() {
+  return students
+    .filter((student) => isCountedStudent(student))
+    .slice()
+    .sort((a, b) => String(a.studentName || "").localeCompare(String(b.studentName || ""), "ko"))
+    .map((student) => `
+      <option value="${escapeHtml(student.id)}">
+        ${escapeHtml([student.studentName, student.school, student.grade].filter(Boolean).join(" · "))}
+      </option>
+    `).join("");
+}
+
+function prepaymentScheduleRow(index, required = false) {
+  return `
+    <fieldset class="prepayment-schedule-row">
+      <legend>차감 구간 ${index}${required ? " (필수)" : " (선택)"}</legend>
+      <label>수업/과목명<input id="prepaymentLabel${index}" type="text" placeholder="예: 수학 또는 문해력"></label>
+      <label>시작월<input id="prepaymentFromMonth${index}" type="month" ${required ? "required" : ""}></label>
+      <label>종료월<input id="prepaymentToMonth${index}" type="month"></label>
+      <label>월 차감액<input id="prepaymentMonthlyAmount${index}" type="number" min="0" step="1000" placeholder="190000" ${required ? "required" : ""}></label>
+    </fieldset>
+  `;
+}
+
+function prepaymentScheduleFromForm(index) {
+  const label = document.getElementById(`prepaymentLabel${index}`)?.value.trim() || "";
+  const fromMonth = document.getElementById(`prepaymentFromMonth${index}`)?.value || "";
+  const toMonth = document.getElementById(`prepaymentToMonth${index}`)?.value || "";
+  const monthlyAmount = Number(document.getElementById(`prepaymentMonthlyAmount${index}`)?.value || 0);
+  if (!label && !fromMonth && !toMonth && !monthlyAmount) return null;
+  if (!fromMonth || monthlyAmount <= 0) return { invalid: true };
+  if (toMonth && toMonth < fromMonth) return { invalid: true };
+  return { label: label || "교육비", fromMonth, toMonth, monthlyAmount };
+}
+
+function savePrepaymentFromForm(event) {
+  event.preventDefault();
+  const studentId = document.getElementById("prepaymentStudentId")?.value || "";
+  const student = students.find((item) => item.id === studentId);
+  const paymentDate = document.getElementById("prepaymentPaymentDate")?.value || "";
+  const paymentMethod = document.getElementById("prepaymentPaymentMethod")?.value || "";
+  const originalAmount = Number(document.getElementById("prepaymentOriginalAmount")?.value || 0);
+  const startMonth = document.getElementById("prepaymentStartMonth")?.value || "";
+  const memo = document.getElementById("prepaymentMemo")?.value.trim() || "";
+  const schedule = [prepaymentScheduleFromForm(1), prepaymentScheduleFromForm(2)].filter(Boolean);
+
+  if (!student || !paymentDate || !paymentMethod || originalAmount <= 0 || !startMonth) {
+    window.alert("학생, 결제일, 결제수단, 선납 원금, 적용 시작월을 모두 입력해주세요.");
+    return;
+  }
+  if (!schedule.length || schedule.some((item) => item.invalid)) {
+    window.alert("차감 구간의 시작월과 월 차감액을 확인해주세요.");
+    return;
+  }
+  if (schedule.some((item) => item.fromMonth < startMonth)) {
+    window.alert("차감 구간의 시작월은 선납 적용 시작월보다 빠를 수 없습니다.");
+    return;
+  }
+  const duplicate = prepaymentAccounts.some((account) => (
+    account.studentId === student.id && account.paymentDate === paymentDate && Number(account.originalAmount) === originalAmount
+  ));
+  if (duplicate) {
+    window.alert("같은 학생의 동일한 선납 내역이 이미 등록되어 있습니다.");
+    return;
+  }
+
+  prepaymentAccounts.push({
+    id: `prepayment-${Date.now()}`,
+    studentId: student.id,
+    studentName: student.studentName,
+    school: student.school || "",
+    grade: student.grade || "",
+    paymentDate,
+    paymentMethod,
+    originalAmount,
+    startMonth,
+    active: true,
+    memo,
+    schedule,
+  });
+  savePrepaymentAccounts();
+  addChangeLog("납부관리", "선납금 등록", `${student.studentName} · ${compactDate(paymentDate)} · ${money(originalAmount)}`);
+  renderAll();
+}
+
+function deletePrepaymentAccount(id) {
+  const account = prepaymentAccounts.find((item) => item.id === id);
+  if (!account || !window.confirm(`${account.studentName} 학생의 선납금 기록을 삭제할까요?`)) return;
+  prepaymentAccounts = prepaymentAccounts.filter((item) => item.id !== id);
+  savePrepaymentAccounts();
+  addChangeLog("납부관리", "선납금 삭제", `${account.studentName} · ${compactDate(account.paymentDate)}`);
+  renderAll();
 }
 
 function renderPrepaymentPanel() {
@@ -193,6 +243,41 @@ function renderPrepaymentPanel() {
       </div>
       <span class="prepayment-note">교재비 등 별도 비용은 차감하지 않음</span>
     </div>
+    <details class="prepayment-entry">
+      <summary>선납금 등록하기</summary>
+      <form id="prepaymentEntryForm">
+        <div class="prepayment-form-grid">
+          <label>학생
+            <select id="prepaymentStudentId" required>
+              <option value="">학생 선택</option>
+              ${prepaymentStudentOptions()}
+            </select>
+          </label>
+          <label>결제일<input id="prepaymentPaymentDate" type="date" required></label>
+          <label>결제수단
+            <select id="prepaymentPaymentMethod" required>
+              <option value="">결제수단 선택</option>
+              <option>카드결제</option>
+              <option>제로페이</option>
+              <option>계좌이체</option>
+              <option>현금</option>
+              <option>기타</option>
+            </select>
+          </label>
+          <label>선납 원금<input id="prepaymentOriginalAmount" type="number" min="1" step="1000" required></label>
+          <label>적용 시작월<input id="prepaymentStartMonth" type="month" required></label>
+        </div>
+        <div class="prepayment-schedule-list">
+          ${prepaymentScheduleRow(1, true)}
+          ${prepaymentScheduleRow(2)}
+        </div>
+        <label class="prepayment-memo">메모<textarea id="prepaymentMemo" rows="3" placeholder="결제 구성이나 과목 변경 내용을 기록하세요."></textarea></label>
+        <div class="prepayment-form-actions">
+          <small>이 기록은 현재 브라우저에만 비공개로 저장됩니다.</small>
+          <button class="primary" type="submit">선납금 저장</button>
+        </div>
+      </form>
+    </details>
     ${activeAccounts.length ? activeAccounts.map((account) => {
       const rows = prepaymentUsageRows(account);
       const usedAmount = rows.reduce((sum, row) => sum + row.usedAmount, 0);
@@ -204,7 +289,10 @@ function renderPrepaymentPanel() {
               <strong>${escapeHtml(account.studentName)}</strong>
               <span>${escapeHtml([account.school, account.grade].filter(Boolean).join(" "))}</span>
             </div>
-            <span>${escapeHtml(compactDate(account.paymentDate))} ${escapeHtml(account.paymentMethod || "")}</span>
+            <div class="prepayment-card-actions">
+              <span>${escapeHtml(compactDate(account.paymentDate))} ${escapeHtml(account.paymentMethod || "")}</span>
+              <button type="button" class="ghost danger" data-prepayment-delete="${escapeHtml(account.id)}">삭제</button>
+            </div>
           </div>
           <div class="prepayment-summary">
             <div><span>선납 원금</span><strong>${money(account.originalAmount)}</strong></div>
@@ -229,10 +317,13 @@ function renderPrepaymentPanel() {
       `;
     }).join("") : `<p class="empty-feedback">등록된 선납금이 없습니다.</p>`}
   `;
+  document.getElementById("prepaymentEntryForm")?.addEventListener("submit", savePrepaymentFromForm);
+  panel.querySelectorAll("[data-prepayment-delete]").forEach((button) => {
+    button.addEventListener("click", () => deletePrepaymentAccount(button.dataset.prepaymentDelete));
+  });
 }
 
 let prepaymentAccounts = loadPrepaymentAccounts();
-seedAnSeoheePrepayment();
 
 const prepaymentOriginalUpcomingRecords = upcomingPaymentRecords;
 upcomingPaymentRecords = function () {
