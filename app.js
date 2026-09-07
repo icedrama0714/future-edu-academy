@@ -2723,6 +2723,7 @@ function showStudentDetail(show) {
   $("studentDetailEmpty")?.classList.toggle("hidden", show);
   $("studentDetailFields")?.classList.toggle("hidden", !show);
   $("leaveBtn")?.classList.toggle("hidden", !show);
+  $("deleteStudentBtn")?.classList.toggle("hidden", !show);
   if (!show) renderGradeSummary();
 }
 
@@ -2760,6 +2761,7 @@ function fillForm(student) {
     check.checked = (student.attendanceDays || []).map(Number).includes(Number(check.value));
   });
   $("leaveBtn").disabled = !students.some((item) => item.id === student.id);
+  if ($("deleteStudentBtn")) $("deleteStudentBtn").disabled = !students.some((item) => item.id === student.id);
   syncFeedbackSubjectOptions(student.subjects);
   clearFeedbackEditor();
   clearLearningReportText();
@@ -2972,7 +2974,7 @@ function deleteStudent(id) {
   if (!requireDeletePermission()) return;
   if (!id || !students.some((student) => student.id === id)) return;
   const selected = students.find((student) => student.id === id);
-  if (!confirm(`${selected.studentName || "선택한 학생"} 정보를 삭제할까요?`)) return;
+  if (!confirm(`${selected.studentName || "선택한 학생"}의 학생자료를 삭제할까요?\n\n학생정보와 연결된 학습·수납 기록도 함께 삭제되며 되돌릴 수 없습니다.`)) return;
 
   students = students.filter((student) => student.id !== id);
   selectedId = "";
@@ -7943,6 +7945,7 @@ function bindEvents() {
   });
   $("resetBtn").addEventListener("click", resetForm);
   $("leaveBtn").addEventListener("click", withdrawSelected);
+  $("deleteStudentBtn")?.addEventListener("click", deleteSelected);
   $("addParentContactBtn").addEventListener("click", addParentContactField);
   $("addCourseHistoryBtn")?.addEventListener("click", addCourseHistoryRecord);
   $("clearCourseHistoryBtn")?.addEventListener("click", clearCourseHistoryEditor);
