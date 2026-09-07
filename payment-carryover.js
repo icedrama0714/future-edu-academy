@@ -29,7 +29,20 @@ function paymentRecordsForCarryoverStudent(student) {
 }
 
 function carryoverSourceMonth(record = {}) {
-  return String(record.memo || "").match(/^(\d{4}-\d{2}) 미납 자동이월/)?.[1] || "";
+  const memo = String(record.memo || "");
+  return memo.match(/^(\d{4}-\d{2}) 미납 자동이월/)?.[1]
+    || memo.match(/^자동이월 원본월:\s*(\d{4}-\d{2})$/m)?.[1]
+    || "";
+}
+
+function carryoverSourceRecordKey(record = {}) {
+  const encoded = String(record.memo || "").match(/^자동이월 원본:\s*(.+)$/m)?.[1] || "";
+  if (!encoded) return "";
+  try {
+    return decodeURIComponent(encoded);
+  } catch {
+    return encoded;
+  }
 }
 
 function isCarryoverPaymentRecord(record = {}) {
@@ -42,10 +55,98 @@ function regularPaymentRecordsInMonth(student, month) {
   ));
 }
 
-function carryoverWasSettled(student, sourceMonth) {
+function carryoverWasSettled(student, sourceMonth, sourceRecordKey = "") {
   return paymentRecordsForCarryoverStudent(student).some((record) => (
-    carryoverSourceMonth(record) === sourceMonth && paymentRecordStatus(record) === "납부완료"
+    carryoverSourceMonth(record) === sourceMonth &&
+    paymentRecordStatus(record) === "납부완료" &&
+    (
+      !carryoverSourceRecordKey(record) ||
+      carryoverSourceRecordKey(record) === sourceRecordKey
+    )
   ));
+}
+
+function carryoverHasSavedRecordInMonth(student, sourceMonth, sourceRecordKey, targetMonth) {
+  return paymentRecordsForCarryoverStudent(student).some((record) => (
+    carryoverSourceMonth(record) === sourceMonth &&
+    recordMonthText(record) === targetMonth &&
+    (
+      !carryoverSourceRecordKey(record) ||
+      carryoverSourceRecordKey(record) === sourceRecordKey
+    )
+  ));
+}
+
+function paymentCarryoverSourceKey(record = {}, sourceMonth = "") {
+  const sourceRecord = record || {};
+  return String(sourceRecord.id || paymentRecordDedupeKey(sourceRecord) || `scheduled|${sourceMonth}`);
+}
+
+function paymentCarryoverSourceToken(value = "") {
+  let hash = 2166136261;
+  for (const character of String(value)) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function carryoverBookFees(record = {}, unpaidAmount = 0) {
+  const items = bookFeeItems(record);
+  if (!items.length) return [];
+  const total = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  if (total <= unpaidAmount) return items;
+  return [{
+    title: bookFeeSummary(record) || record.paymentName || "교재비",
+    amount: unpaidAmount,
+  }];
+}
+
+function paymentCarryoverRecord(student, sourceMonth, sourceRecord, currentMonth) {
+  const unpaidAmount = sourceRecord
+    ? outstandingPaymentAmount(sourceRecord)
+    : paymentBaseTuitionFromStudent(student);
+  if (unpaidAmount <= 0) return null;
+
+  const sourceRecordKey = paymentCarryoverSourceKey(sourceRecord, sourceMonth);
+  if (carryoverWasSettled(student, sourceMonth, sourceRecordKey)) return null;
+  if (carryoverHasSavedRecordInMonth(student, sourceMonth, sourceRecordKey, currentMonth)) return null;
+
+  const bookFees = sourceRecord ? carryoverBookFees(sourceRecord, unpaidAmount) : [];
+  const bookFeeAmount = bookFees.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const sourcePaymentName = sourceRecord?.paymentName || paymentNameFromStudent(student) || "교육비";
+  const sourceLabel = `${Number(sourceMonth.slice(5, 7))}월 미납 이월`;
+  const memo = [
+    `${sourceMonth} 미납 자동이월`,
+    `자동이월 원본월: ${sourceMonth}`,
+    `자동이월 원본: ${encodeURIComponent(sourceRecordKey)}`,
+  ].join("\n");
+  return {
+    ...paymentRecord(student.studentName, {
+      registered: `${currentMonth}-01`,
+      paymentType: "이월",
+      paymentName: `${sourceLabel} · ${sourcePaymentName}`,
+      baseTuition: Math.max(0, unpaidAmount - bookFeeAmount),
+      tuition: unpaidAmount,
+      discount: 0,
+      paidAmount: 0,
+      unpaidAmount,
+      paymentDate: "",
+      paymentMethod: "",
+      memo,
+      bookFees,
+      status: "미납",
+      preservePaymentName: true,
+    }),
+    id: `auto-carry|${student.id}|${paymentCarryoverSourceToken(sourceRecordKey)}|${currentMonth}`,
+    studentId: student.id,
+    studentName: student.studentName,
+    grade: student.grade,
+    school: student.school,
+    phone: student.parentPhone,
+    standalone: false,
+    autoDue: true,
+  };
 }
 
 function outstandingPaymentAmount(record = {}) {
@@ -97,47 +198,15 @@ function paymentCarryoverRecords() {
   const currentMonth = currentMonthText();
   return students
     .filter((student) => isCountedStudent(student))
-    .flatMap((student) => paymentCarryoverSourceMonths(student, currentMonth).map((sourceMonth) => {
-      if (carryoverWasSettled(student, sourceMonth)) return null;
-
+    .flatMap((student) => paymentCarryoverSourceMonths(student, currentMonth).flatMap((sourceMonth) => {
       const sourceRecords = regularPaymentRecordsInMonth(student, sourceMonth);
       const unpaidRecords = sourceRecords.filter((record) => paymentRecordStatus(record) === "미납");
-      if (sourceRecords.length && !unpaidRecords.length) return null;
+      if (sourceRecords.length && !unpaidRecords.length) return [];
 
-      const unpaidAmount = sourceRecords.length
-        ? unpaidRecords.reduce((sum, record) => sum + outstandingPaymentAmount(record), 0)
-        : paymentBaseTuitionFromStudent(student);
-      if (unpaidAmount <= 0) return null;
-
-      const sourcePaymentName = unpaidRecords.map((record) => record.paymentName).filter(Boolean).join("+")
-        || paymentNameFromStudent(student)
-        || "교육비";
-      const sourceLabel = `${Number(sourceMonth.slice(5, 7))}월 미납 이월`;
-      return {
-        ...paymentRecord(student.studentName, {
-          registered: `${currentMonth}-01`,
-          paymentType: "이월",
-          paymentName: `${sourceLabel} · ${sourcePaymentName}`,
-          baseTuition: unpaidAmount,
-          tuition: unpaidAmount,
-          discount: 0,
-          paidAmount: 0,
-          unpaidAmount,
-          paymentDate: "",
-          paymentMethod: "",
-          memo: `${sourceMonth} 미납 자동이월`,
-          status: "미납",
-          preservePaymentName: true,
-        }),
-        id: `auto-carry|${student.id}|${sourceMonth}|${currentMonth}`,
-        studentId: student.id,
-        studentName: student.studentName,
-        grade: student.grade,
-        school: student.school,
-        phone: student.parentPhone,
-        standalone: false,
-        autoDue: true,
-      };
+      const carryoverSources = sourceRecords.length ? unpaidRecords : [null];
+      return carryoverSources
+        .map((record) => paymentCarryoverRecord(student, sourceMonth, record, currentMonth))
+        .filter(Boolean);
     }).filter(Boolean));
 }
 

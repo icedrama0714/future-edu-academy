@@ -312,24 +312,29 @@ function isExcelSourceMemoLine(line = "") {
   return /^엑셀 원본\s+.+\.xlsx\s+\d*행$/.test(String(line || "").trim());
 }
 
+function isPaymentSystemMemoLine(line = "") {
+  const text = String(line || "").trim();
+  return isExcelSourceMemoLine(text) || /^자동이월 원본(?:월)?:/.test(text);
+}
+
 function visiblePaymentMemo(memo = "") {
   return String(memo || "")
     .split("\n")
-    .filter((line) => !isExcelSourceMemoLine(line))
+    .filter((line) => !isPaymentSystemMemoLine(line))
     .join("\n")
     .trim();
 }
 
-function hiddenExcelSourceMemo(memo = "") {
+function hiddenPaymentSystemMemo(memo = "") {
   return String(memo || "")
     .split("\n")
-    .filter(isExcelSourceMemoLine)
+    .filter(isPaymentSystemMemoLine)
     .join("\n")
     .trim();
 }
 
 function mergeVisibleAndHiddenPaymentMemo(visibleMemo = "", previousMemo = "") {
-  return [String(visibleMemo || "").trim(), hiddenExcelSourceMemo(previousMemo)]
+  return [String(visibleMemo || "").trim(), hiddenPaymentSystemMemo(previousMemo)]
     .filter(Boolean)
     .join("\n");
 }
@@ -4407,7 +4412,7 @@ function paymentRecordRows(record, rowNumber) {
       </td>
       <td>
         <div class="payment-row-actions">
-          <button class="mini-button" type="button" data-payment-toggle="${escapeHtml(record.id)}">상세</button>
+          <button class="mini-button" type="button" data-payment-toggle="${escapeHtml(record.id)}">상세/수정</button>
           ${record.autoDue ? "" : `<button class="mini-danger-button" type="button" data-payment-delete="${escapeHtml(record.id)}">삭제</button>`}
         </div>
       </td>
@@ -4491,7 +4496,7 @@ function paymentRecordRows(record, rowNumber) {
             <textarea data-payment-field="memo" rows="2">${escapeHtml(visiblePaymentMemo(record.memo))}</textarea>
           </label>
           <div class="payment-save-row wide">
-            <button class="primary-button" type="button" data-payment-record-save="${escapeHtml(record.id)}">수납기록 저장</button>
+            <button class="primary-button" type="button" data-payment-record-save="${escapeHtml(record.id)}">수정 저장</button>
           </div>
         </div>
       </td>
@@ -4511,7 +4516,7 @@ function bindPaymentOverviewEvents() {
       .find((item) => item.dataset.paymentToggle === recordId);
     if (!detail) return;
     const hidden = detail.classList.toggle("hidden");
-    if (button) button.textContent = hidden ? "상세" : "접기";
+    if (button) button.textContent = hidden ? "상세/수정" : "접기";
   };
 
   $("paymentOverview").querySelectorAll("[data-payment-record-id]").forEach((row) => {
@@ -4709,7 +4714,9 @@ function savePaymentRecordInfo(recordId) {
       },
     ]);
     saveStandalonePaymentRecords();
+    addChangeLog("납부관리", "수납기록 수정", `${nextRecord.studentName || "이름 없음"} · ${nextRecord.paymentName || ""} · ${money(nextRecord.tuition)}`);
     renderAll();
+    alert("수납기록을 수정했습니다.");
     return;
   }
 
@@ -4732,7 +4739,9 @@ function savePaymentRecordInfo(recordId) {
   student.paymentStatus = nextRecord.status;
 
   saveStudents();
+  addChangeLog("납부관리", "수납기록 수정", `${nextRecord.studentName || "이름 없음"} · ${nextRecord.paymentName || ""} · ${money(nextRecord.tuition)}`);
   renderAll();
+  alert("수납기록을 수정했습니다.");
 }
 
 function syncStudentLatestPayment(student) {
