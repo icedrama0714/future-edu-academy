@@ -1109,8 +1109,6 @@ function loadBookFeeRates() {
 
 function normalizeBook(book = {}) {
   const franchiseProgram = Object.prototype.hasOwnProperty.call(FRANCHISE_MAIN_BOOK_TARGETS, book.franchiseProgram) ? book.franchiseProgram : "";
-  const isExcludedSohaniDajigi = franchiseProgram === "소한이 한글"
-    && [book.title, book.level, book.volume].some((value) => String(value || "").includes("다지기"));
   return {
     id: book.id || createId(),
     subject: book.subject || SUBJECTS[0],
@@ -1119,7 +1117,7 @@ function normalizeBook(book = {}) {
     volume: String(book.volume || ""),
     publisher: String(book.publisher || ""),
     franchiseProgram,
-    mainBookUnitsPerItem: isExcludedSohaniDajigi ? 0 : Math.max(0, Number(book.mainBookUnitsPerItem || 0)),
+    mainBookUnitsPerItem: Math.max(0, Number(book.mainBookUnitsPerItem || 0)),
     purchasePrice: Number(book.purchasePrice || 0),
     salePrice: Number(book.salePrice || 0),
     memo: String(book.memo || ""),
@@ -6188,10 +6186,6 @@ function bookStockTypeLabel(type) {
 function bookMainUnitsForRecord(record = {}) {
   if (!["order", "in"].includes(record.type)) return 0;
   const book = bookById(record.bookId) || {};
-  const program = record.franchiseProgram || book.franchiseProgram || "";
-  const isExcludedSohaniDajigi = program === "소한이 한글"
-    && [book.title, book.level, book.volume].some((value) => String(value || "").includes("다지기"));
-  if (isExcludedSohaniDajigi) return 0;
   const unitsPerItem = Number(record.mainBookUnitsPerItem ?? book.mainBookUnitsPerItem ?? 0);
   return Math.max(0, unitsPerItem) * Number(record.quantity || 0);
 }
