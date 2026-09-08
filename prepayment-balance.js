@@ -296,15 +296,19 @@ function renderPrepaymentPanel() {
   const panel = document.getElementById("prepaymentBalancePanel");
   if (!panel) return;
   const activeAccounts = prepaymentAccounts.filter((account) => account.active !== false);
+  const totalBalance = activeAccounts.reduce((sum, account) => sum + prepaymentBalanceThrough(account), 0);
   panel.innerHTML = `
-    <div class="prepayment-panel-head">
-      <div>
-        <p class="eyebrow">선납 관리</p>
-        <h3>선납금 잔액</h3>
-      </div>
-      <span class="prepayment-note">교재비 등 별도 비용은 차감하지 않음</span>
-    </div>
-    <details class="prepayment-entry">
+    <details class="prepayment-overview">
+      <summary class="prepayment-panel-head">
+        <div>
+          <p class="eyebrow">선납 관리</p>
+          <h3>선납금 잔액</h3>
+        </div>
+        <span class="prepayment-panel-summary-meta">${activeAccounts.length}명 · 잔액 ${money(totalBalance)}</span>
+      </summary>
+      <div class="prepayment-panel-body">
+        <p class="prepayment-note">교재비 등 별도 비용은 선납금에서 차감하지 않습니다.</p>
+        <details class="prepayment-entry">
       <summary>선납금 등록하기</summary>
       <form id="prepaymentEntryForm">
         <div class="prepayment-form-grid">
@@ -338,8 +342,8 @@ function renderPrepaymentPanel() {
           <button class="primary" id="prepaymentSaveBtn" type="button">선납금 저장</button>
         </div>
       </form>
-    </details>
-    ${activeAccounts.length ? activeAccounts.map((account) => {
+        </details>
+        ${activeAccounts.length ? activeAccounts.map((account) => {
       const rows = prepaymentUsageRows(account);
       const separateFees = prepaymentSeparateFeeRecords(account);
       const usedAmount = rows.reduce((sum, row) => sum + row.usedAmount, 0);
@@ -403,7 +407,9 @@ function renderPrepaymentPanel() {
           <p>${escapeHtml(account.memo || "")}</p>
         </article>
       `;
-    }).join("") : `<p class="empty-feedback">등록된 선납금이 없습니다.</p>`}
+        }).join("") : `<p class="empty-feedback">등록된 선납금이 없습니다.</p>`}
+      </div>
+    </details>
   `;
   document.getElementById("prepaymentSaveBtn")?.addEventListener("click", savePrepaymentFromForm);
   panel.querySelectorAll("[data-prepayment-delete]").forEach((button) => {
