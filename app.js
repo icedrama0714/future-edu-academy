@@ -6220,6 +6220,53 @@ function renderFranchiseBookSummary() {
   }).join("");
 }
 
+function bookHistoryItemHtml(record) {
+  const book = bookById(record.bookId);
+  const mainUnits = bookMainUnitsForRecord(record);
+  return `
+    <article class="book-history-item ${record.type}">
+      <div>
+        <strong>${bookStockTypeLabel(record.type)} · ${escapeHtml(bookDisplayName(book))}</strong>
+        <span>${record.quantity}권 · 단가 ${money(record.unitPrice)} · 합계 ${money(bookStockTotalAmount(record))}</span>
+        ${record.orderNumber ? `<span>주문번호 ${escapeHtml(record.orderNumber)}</span>` : ""}
+        ${mainUnits > 0 ? `<span class="book-franchise-label">${escapeHtml(bookFranchiseForRecord(record))} 메인교재 ${mainUnits}권 인정</span>` : ""}
+        ${record.partner ? `<span>${escapeHtml(record.partner)}</span>` : ""}
+        ${record.memo ? `<p>${escapeHtml(record.memo)}</p>` : ""}
+      </div>
+      <div class="row-actions">
+        <button class="mini-button" type="button" data-book-stock-edit="${escapeHtml(record.id)}">수정</button>
+        <button class="mini-danger-button" type="button" data-book-stock-delete="${escapeHtml(record.id)}">삭제</button>
+      </div>
+    </article>
+  `;
+}
+
+function bookHistoryDateGroupHtml(date, records, open = false) {
+  const purchaseRecords = records.filter((record) => ["order", "in"].includes(record.type));
+  const usageRecords = records.filter((record) => record.type === "out");
+  const purchaseQuantity = purchaseRecords.reduce((sum, record) => sum + Number(record.quantity || 0), 0);
+  const usageQuantity = usageRecords.reduce((sum, record) => sum + Number(record.quantity || 0), 0);
+  const purchaseAmount = purchaseRecords.reduce((sum, record) => sum + bookStockTotalAmount(record), 0);
+  const typeSummary = [
+    purchaseRecords.length ? `매입 ${purchaseQuantity}권` : "",
+    usageRecords.length ? `사용 ${usageQuantity}권` : "",
+  ].filter(Boolean).join(" · ");
+  return `
+    <details class="book-date-group"${open ? " open" : ""}>
+      <summary>
+        <span class="book-date-summary-main">
+          <strong>${escapeHtml(date || "날짜 미입력")}</strong>
+          <span>${records.length}건 · ${escapeHtml(typeSummary || "기록 없음")}</span>
+        </span>
+        <span class="book-date-summary-amount">${purchaseRecords.length ? money(purchaseAmount) : "상세보기"}</span>
+      </summary>
+      <div class="management-list book-date-records">
+        ${records.map(bookHistoryItemHtml).join("")}
+      </div>
+    </details>
+  `;
+}
+
 function renderBookOptions() {
   const subjectSelect = $("bookSubject");
   const filterSelect = $("bookSubjectFilter");
@@ -6305,27 +6352,14 @@ function renderBooksOverview() {
     const target = [bookDisplayName(book), bookFranchiseForRecord(record), record.orderNumber, record.partner, record.memo].join(" ").toLowerCase();
     return !query || target.includes(query);
   });
+  const recordsByDate = new Map();
+  filteredRecords.slice(0, 80).forEach((record) => {
+    const date = record.date || "";
+    if (!recordsByDate.has(date)) recordsByDate.set(date, []);
+    recordsByDate.get(date).push(record);
+  });
   history.innerHTML = filteredRecords.length
-    ? filteredRecords.slice(0, 80).map((record) => {
-      const book = bookById(record.bookId);
-      const mainUnits = bookMainUnitsForRecord(record);
-      return `
-        <article class="book-history-item ${record.type}">
-          <div>
-            <strong>${bookStockTypeLabel(record.type)} · ${escapeHtml(bookDisplayName(book))}</strong>
-            <span>${escapeHtml(compactDate(record.date))} · ${record.quantity}권 · 단가 ${money(record.unitPrice)} · 합계 ${money(bookStockTotalAmount(record))}</span>
-            ${record.orderNumber ? `<span>주문번호 ${escapeHtml(record.orderNumber)}</span>` : ""}
-            ${mainUnits > 0 ? `<span class="book-franchise-label">${escapeHtml(bookFranchiseForRecord(record))} 메인교재 ${mainUnits}권 인정</span>` : ""}
-            ${record.partner ? `<span>${escapeHtml(record.partner)}</span>` : ""}
-            ${record.memo ? `<p>${escapeHtml(record.memo)}</p>` : ""}
-          </div>
-          <div class="row-actions">
-            <button class="mini-button" type="button" data-book-stock-edit="${escapeHtml(record.id)}">수정</button>
-            <button class="mini-danger-button" type="button" data-book-stock-delete="${escapeHtml(record.id)}">삭제</button>
-          </div>
-        </article>
-      `;
-    }).join("")
+    ? [...recordsByDate.entries()].map(([date, records]) => bookHistoryDateGroupHtml(date, records, Boolean(query))).join("")
     : `<p class="empty-feedback">조건에 맞는 주문/입고/사용 기록이 없습니다.</p>`;
 
   inventory.querySelectorAll("[data-book-edit]").forEach((button) => button.addEventListener("click", () => editBook(button.dataset.bookEdit)));

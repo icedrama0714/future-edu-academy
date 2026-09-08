@@ -2903,6 +2903,72 @@ h2 {
   background: #fffaf2;
 }
 
+.book-date-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.book-date-group > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.book-date-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.book-date-group > summary::after {
+  content: "펼치기";
+  flex: 0 0 auto;
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.book-date-group[open] > summary::after {
+  content: "접기";
+}
+
+.book-date-group[open] > summary {
+  border-bottom: 1px solid var(--line);
+  background: #f7faf8;
+}
+
+.book-date-summary-main {
+  min-width: 0;
+}
+
+.book-date-summary-main strong,
+.book-date-summary-main span {
+  display: block;
+}
+
+.book-date-summary-main span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.book-date-summary-amount {
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.book-date-records {
+  padding: 10px;
+}
+
 .book-franchise-label {
   color: var(--accent-dark) !important;
   font-weight: 800;
