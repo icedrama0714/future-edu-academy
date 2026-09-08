@@ -31,6 +31,11 @@ const SUBJECTS = [
   "소한이 한글",
 ];
 
+const FRANCHISE_MAIN_BOOK_TARGETS = {
+  "소한이 한글": 30,
+  "요리수 연산": 30,
+};
+
 const GONGPIL_SUBJECTS = [
   "국어",
   "사회",
@@ -1110,6 +1115,8 @@ function normalizeBook(book = {}) {
     level: String(book.level || ""),
     volume: String(book.volume || ""),
     publisher: String(book.publisher || ""),
+    franchiseProgram: Object.prototype.hasOwnProperty.call(FRANCHISE_MAIN_BOOK_TARGETS, book.franchiseProgram) ? book.franchiseProgram : "",
+    mainBookUnitsPerItem: Math.max(0, Number(book.mainBookUnitsPerItem || 0)),
     purchasePrice: Number(book.purchasePrice || 0),
     salePrice: Number(book.salePrice || 0),
     memo: String(book.memo || ""),
@@ -1129,14 +1136,18 @@ function loadBookCatalog() {
 }
 
 function normalizeBookStockRecord(record = {}) {
+  const allowedType = ["order", "in", "out"].includes(record.type) ? record.type : "in";
   return {
     id: record.id || createId(),
     bookId: record.bookId || "",
     date: record.date || currentDateText(),
-    type: record.type === "out" ? "out" : "in",
+    type: allowedType,
     quantity: Math.max(1, Number(record.quantity || 1)),
     unitPrice: Number(record.unitPrice || 0),
     partner: String(record.partner || ""),
+    orderNumber: String(record.orderNumber || ""),
+    franchiseProgram: Object.prototype.hasOwnProperty.call(FRANCHISE_MAIN_BOOK_TARGETS, record.franchiseProgram) ? record.franchiseProgram : "",
+    mainBookUnitsPerItem: Math.max(0, Number(record.mainBookUnitsPerItem || 0)),
     memo: String(record.memo || ""),
     financeRecordId: record.financeRecordId || "",
   };
@@ -2304,6 +2315,7 @@ function initOptions() {
   }
   if ($("courseHistoryDate")) $("courseHistoryDate").value = currentDateText();
   if ($("bookStockDate")) $("bookStockDate").value = currentDateText();
+  if ($("bookQuotaYear")) $("bookQuotaYear").value = String(new Date().getFullYear());
   if ($("archiveMonthFilter")) $("archiveMonthFilter").value = currentMonthText();
   setLearningReportRange();
   if ($("roleModeSelect")) $("roleModeSelect").value = currentRoleMode;
@@ -6153,11 +6165,58 @@ function bookById(id) {
 function bookStockCount(bookId, excludeRecordId = "") {
   return bookStockRecords
     .filter((record) => record.bookId === bookId && record.id !== excludeRecordId)
-    .reduce((sum, record) => sum + (record.type === "out" ? -Number(record.quantity || 0) : Number(record.quantity || 0)), 0);
+    .reduce((sum, record) => {
+      if (record.type === "out") return sum - Number(record.quantity || 0);
+      if (record.type === "in") return sum + Number(record.quantity || 0);
+      return sum;
+    }, 0);
 }
 
 function bookStockTotalAmount(record = {}) {
   return Number(record.quantity || 0) * Number(record.unitPrice || 0);
+}
+
+function bookStockTypeLabel(type) {
+  if (type === "order") return "주문";
+  if (type === "out") return "사용";
+  return "입고";
+}
+
+function bookMainUnitsForRecord(record = {}) {
+  if (!["order", "in"].includes(record.type)) return 0;
+  const book = bookById(record.bookId) || {};
+  const unitsPerItem = Number(record.mainBookUnitsPerItem ?? book.mainBookUnitsPerItem ?? 0);
+  return Math.max(0, unitsPerItem) * Number(record.quantity || 0);
+}
+
+function bookFranchiseForRecord(record = {}) {
+  return record.franchiseProgram || bookById(record.bookId)?.franchiseProgram || "";
+}
+
+function renderFranchiseBookSummary() {
+  const target = $("bookFranchiseSummary");
+  if (!target) return;
+  const year = String($("bookQuotaYear")?.value || new Date().getFullYear());
+  target.innerHTML = Object.entries(FRANCHISE_MAIN_BOOK_TARGETS).map(([program, required]) => {
+    const records = bookStockRecords.filter((record) => String(record.date || "").startsWith(`${year}-`)
+      && bookFranchiseForRecord(record) === program
+      && ["order", "in"].includes(record.type));
+    const ordered = records.reduce((sum, record) => sum + bookMainUnitsForRecord(record), 0);
+    const remaining = Math.max(0, required - ordered);
+    const percentage = Math.min(100, Math.round((ordered / required) * 100));
+    return `
+      <article class="franchise-book-card">
+        <div>
+          <strong>${escapeHtml(program)}</strong>
+          <span>${escapeHtml(year)}년 주문 ${ordered}권 / 의무 ${required}권</span>
+        </div>
+        <div class="franchise-book-progress" aria-label="${escapeHtml(program)} 의무교재 달성률 ${percentage}%">
+          <span style="width:${percentage}%"></span>
+        </div>
+        <b>${remaining > 0 ? `${remaining}권 남음` : "의무 권수 충족"}</b>
+      </article>
+    `;
+  }).join("");
 }
 
 function renderBookOptions() {
@@ -6202,7 +6261,7 @@ function renderBooksOverview() {
   const query = ($("bookSearchInput")?.value || "").trim().toLowerCase();
   const filteredBooks = [...bookCatalog]
     .filter((book) => {
-      const target = [book.subject, book.title, book.level, book.volume, book.publisher, book.memo].join(" ").toLowerCase();
+      const target = [book.subject, book.title, book.level, book.volume, book.publisher, book.franchiseProgram, book.memo].join(" ").toLowerCase();
       return (!subject || book.subject === subject) && (!query || target.includes(query));
     })
     .sort((a, b) => bookDisplayName(a).localeCompare(bookDisplayName(b), "ko"));
@@ -6211,6 +6270,7 @@ function renderBooksOverview() {
   $("bookCatalogCount").textContent = `${bookCatalog.length}종`;
   $("bookTotalStock").textContent = `${stockValues.reduce((sum, value) => sum + value, 0)}권`;
   $("bookLowStockCount").textContent = `${stockValues.filter((value) => value <= 2).length}종`;
+  renderFranchiseBookSummary();
 
   inventory.innerHTML = filteredBooks.length
     ? filteredBooks.map((book) => {
@@ -6222,6 +6282,7 @@ function renderBooksOverview() {
           <div>
             <strong>${escapeHtml(bookDisplayName(book))}</strong>
             <span>${escapeHtml(book.publisher || "출판사 미입력")} · 매입 ${money(book.purchasePrice)} · 판매 ${money(book.salePrice)}</span>
+            ${book.franchiseProgram ? `<span class="book-franchise-label">${escapeHtml(book.franchiseProgram)} · 1개당 메인 ${book.mainBookUnitsPerItem}권 인정</span>` : ""}
             ${book.memo ? `<p>${escapeHtml(book.memo)}</p>` : ""}
           </div>
           <div class="book-stock-box">
@@ -6238,14 +6299,22 @@ function renderBooksOverview() {
     }).join("")
     : `<p class="empty-feedback">등록된 교재가 없습니다.</p>`;
 
-  history.innerHTML = bookStockRecords.length
-    ? bookStockRecords.slice(0, 80).map((record) => {
+  const filteredRecords = bookStockRecords.filter((record) => {
+    const book = bookById(record.bookId);
+    const target = [bookDisplayName(book), bookFranchiseForRecord(record), record.orderNumber, record.partner, record.memo].join(" ").toLowerCase();
+    return !query || target.includes(query);
+  });
+  history.innerHTML = filteredRecords.length
+    ? filteredRecords.slice(0, 80).map((record) => {
       const book = bookById(record.bookId);
+      const mainUnits = bookMainUnitsForRecord(record);
       return `
         <article class="book-history-item ${record.type}">
           <div>
-            <strong>${record.type === "out" ? "사용" : "입고"} · ${escapeHtml(bookDisplayName(book))}</strong>
+            <strong>${bookStockTypeLabel(record.type)} · ${escapeHtml(bookDisplayName(book))}</strong>
             <span>${escapeHtml(compactDate(record.date))} · ${record.quantity}권 · 단가 ${money(record.unitPrice)} · 합계 ${money(bookStockTotalAmount(record))}</span>
+            ${record.orderNumber ? `<span>주문번호 ${escapeHtml(record.orderNumber)}</span>` : ""}
+            ${mainUnits > 0 ? `<span class="book-franchise-label">${escapeHtml(bookFranchiseForRecord(record))} 메인교재 ${mainUnits}권 인정</span>` : ""}
             ${record.partner ? `<span>${escapeHtml(record.partner)}</span>` : ""}
             ${record.memo ? `<p>${escapeHtml(record.memo)}</p>` : ""}
           </div>
@@ -6256,7 +6325,7 @@ function renderBooksOverview() {
         </article>
       `;
     }).join("")
-    : `<p class="empty-feedback">입고/사용 기록이 없습니다.</p>`;
+    : `<p class="empty-feedback">조건에 맞는 주문/입고/사용 기록이 없습니다.</p>`;
 
   inventory.querySelectorAll("[data-book-edit]").forEach((button) => button.addEventListener("click", () => editBook(button.dataset.bookEdit)));
   inventory.querySelectorAll("[data-book-stock]").forEach((button) => button.addEventListener("click", () => prepareBookStock(button.dataset.bookStock)));
@@ -6272,6 +6341,8 @@ function clearBookForm() {
   $("bookLevel").value = "";
   $("bookVolume").value = "";
   $("bookPublisher").value = "";
+  $("bookFranchiseProgram").value = "";
+  $("bookMainUnitsPerItem").value = "0";
   $("bookPurchasePrice").value = "";
   $("bookSalePrice").value = "";
   $("bookMemo").value = "";
@@ -6285,6 +6356,8 @@ function readBookForm() {
     level: $("bookLevel").value.trim(),
     volume: $("bookVolume").value.trim(),
     publisher: $("bookPublisher").value.trim(),
+    franchiseProgram: $("bookFranchiseProgram").value,
+    mainBookUnitsPerItem: Number($("bookMainUnitsPerItem").value || 0),
     purchasePrice: Number($("bookPurchasePrice").value || 0),
     salePrice: Number($("bookSalePrice").value || 0),
     memo: $("bookMemo").value.trim(),
@@ -6319,6 +6392,8 @@ function editBook(id) {
   $("bookLevel").value = book.level || "";
   $("bookVolume").value = book.volume || "";
   $("bookPublisher").value = book.publisher || "";
+  $("bookFranchiseProgram").value = book.franchiseProgram || "";
+  $("bookMainUnitsPerItem").value = book.mainBookUnitsPerItem || "0";
   $("bookPurchasePrice").value = book.purchasePrice || "";
   $("bookSalePrice").value = book.salePrice || "";
   $("bookMemo").value = book.memo || "";
@@ -6345,10 +6420,11 @@ function deleteBook(id) {
 function clearBookStockForm() {
   $("bookStockRecordId").value = "";
   $("bookStockDate").value = currentDateText();
-  $("bookStockType").value = "in";
+  $("bookStockType").value = "order";
   $("bookStockQuantity").value = "1";
   $("bookStockUnitPrice").value = "";
   $("bookStockPartner").value = "";
+  $("bookStockOrderNumber").value = "";
   $("bookStockMemo").value = "";
   $("bookStockCreateExpense").checked = true;
   updateBookStockUnitPrice(true);
@@ -6372,6 +6448,9 @@ function readBookStockForm() {
     quantity: Number($("bookStockQuantity").value || 1),
     unitPrice: Number($("bookStockUnitPrice").value || 0),
     partner: $("bookStockPartner").value.trim(),
+    orderNumber: $("bookStockOrderNumber").value.trim(),
+    franchiseProgram: bookById($("bookStockBook").value)?.franchiseProgram || existing?.franchiseProgram || "",
+    mainBookUnitsPerItem: bookById($("bookStockBook").value)?.mainBookUnitsPerItem ?? existing?.mainBookUnitsPerItem ?? 0,
     memo: $("bookStockMemo").value.trim(),
     financeRecordId: existing?.financeRecordId || "",
   });
@@ -6379,7 +6458,7 @@ function readBookStockForm() {
 
 function upsertBookStockExpense(record) {
   const book = bookById(record.bookId);
-  if (record.type !== "in" || !$("bookStockCreateExpense").checked) {
+  if (!["order", "in"].includes(record.type) || !$("bookStockCreateExpense").checked) {
     if (record.financeRecordId) {
       financeRecords = financeRecords.filter((item) => item.id !== record.financeRecordId);
       record.financeRecordId = "";
@@ -6431,7 +6510,7 @@ function saveBookStockRecord() {
     ...bookStockRecords.filter((item) => item.id !== record.id),
   ].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   saveBookStockRecords();
-  addChangeLog("교재관리", exists ? "교재 입출고 수정" : "교재 입출고 저장", `${record.type === "out" ? "사용" : "입고"} · ${bookDisplayName(book)} · ${record.quantity}권`);
+  addChangeLog("교재관리", exists ? "교재 주문/입출고 수정" : "교재 주문/입출고 저장", `${bookStockTypeLabel(record.type)} · ${bookDisplayName(book)} · ${record.quantity}권`);
   clearBookStockForm();
   renderAll();
 }
@@ -6446,6 +6525,7 @@ function editBookStockRecord(id) {
   $("bookStockQuantity").value = record.quantity || 1;
   $("bookStockUnitPrice").value = record.unitPrice || "";
   $("bookStockPartner").value = record.partner || "";
+  $("bookStockOrderNumber").value = record.orderNumber || "";
   $("bookStockMemo").value = record.memo || "";
   $("bookStockCreateExpense").checked = Boolean(record.financeRecordId);
   document.querySelectorAll(".book-entry-panel")[1]?.setAttribute("open", "");
@@ -6457,14 +6537,14 @@ function deleteBookStockRecord(id) {
   const record = bookStockRecords.find((item) => item.id === id);
   if (!record) return;
   const book = bookById(record.bookId);
-  if (!confirm(`${bookDisplayName(book)} ${record.type === "out" ? "사용" : "입고"} 기록을 삭제할까요?`)) return;
+  if (!confirm(`${bookDisplayName(book)} ${bookStockTypeLabel(record.type)} 기록을 삭제할까요?`)) return;
   bookStockRecords = bookStockRecords.filter((item) => item.id !== id);
   if (record.financeRecordId) {
     financeRecords = financeRecords.filter((item) => item.id !== record.financeRecordId);
     saveFinanceRecords();
   }
   saveBookStockRecords();
-  addChangeLog("교재관리", "교재 입출고 삭제", `${bookDisplayName(book)} · ${record.quantity}권`);
+  addChangeLog("교재관리", "교재 주문/입출고 삭제", `${bookDisplayName(book)} · ${record.quantity}권`);
   renderAll();
 }
 
@@ -8078,7 +8158,7 @@ function bindEvents() {
   $("clearBookStockBtn")?.addEventListener("click", clearBookStockForm);
   $("bookStockBook")?.addEventListener("change", () => updateBookStockUnitPrice(true));
   $("bookStockType")?.addEventListener("change", () => updateBookStockUnitPrice(true));
-  ["bookSubjectFilter", "bookSearchInput"].forEach((id) => {
+  ["bookSubjectFilter", "bookSearchInput", "bookQuotaYear"].forEach((id) => {
     $(id)?.addEventListener("input", renderBooksOverview);
   });
   [

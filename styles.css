@@ -2467,6 +2467,75 @@ h2 {
   color: var(--warn);
 }
 
+.franchise-book-panel {
+  margin: 0 0 14px;
+  padding: 14px;
+  border: 1px solid #cfe2d4;
+  border-radius: 10px;
+  background: #f7fbf8;
+}
+
+.franchise-year-filter {
+  display: grid;
+  grid-template-columns: auto 92px;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.franchise-book-help {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.franchise-book-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.franchise-book-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.franchise-book-card strong,
+.franchise-book-card span {
+  display: block;
+}
+
+.franchise-book-card span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.franchise-book-card b {
+  color: var(--accent-dark);
+  font-size: 13px;
+}
+
+.franchise-book-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8efea;
+}
+
+.franchise-book-progress span {
+  height: 100%;
+  margin: 0;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
 .finance-tools {
   grid-template-columns: minmax(150px, 0.22fr) minmax(130px, 0.18fr) minmax(240px, 1fr);
 }
@@ -2827,6 +2896,16 @@ h2 {
 
 .book-history-item.out {
   background: #fffafa;
+}
+
+.book-history-item.order {
+  border-style: dashed;
+  background: #fffaf2;
+}
+
+.book-franchise-label {
+  color: var(--accent-dark) !important;
+  font-weight: 800;
 }
 
 .finance-item {
@@ -4091,6 +4170,7 @@ legend {
   .finance-summary-grid,
   .finance-bottom-grid,
   .book-summary-grid,
+  .franchise-book-grid,
   .finance-form-grid,
   .tuition-form-grid,
   .book-form-grid,

@@ -1131,9 +1131,24 @@
               </label>
               <label>
                 검색
-                <input id="bookSearchInput" type="search" placeholder="교재명, 단계, 출판사 검색" />
+                <input id="bookSearchInput" type="search" placeholder="교재명, 프랜차이즈, 주문번호 검색" />
               </label>
             </div>
+
+            <section class="franchise-book-panel" aria-label="프랜차이즈 의무 메인교재 주문 현황">
+              <div class="panel-head compact-head">
+                <div>
+                  <p class="eyebrow">의무교재 조회</p>
+                  <h3>연도별 메인교재 주문 권수</h3>
+                </div>
+                <label class="franchise-year-filter">
+                  조회연도
+                  <input id="bookQuotaYear" type="number" min="2020" max="2100" step="1" />
+                </label>
+              </div>
+              <p class="franchise-book-help">소한이 한글의 다지기 단독 교재는 의무 권수에서 제외됩니다. 주문이 입고되면 기존 기록을 수정해 구분만 ‘입고’로 바꾸세요.</p>
+              <div class="franchise-book-grid" id="bookFranchiseSummary"></div>
+            </section>
 
             <details class="book-entry-panel" open>
               <summary>교재 등록</summary>
@@ -1160,6 +1175,18 @@
                   <input id="bookPublisher" type="text" />
                 </label>
                 <label>
+                  프랜차이즈
+                  <select id="bookFranchiseProgram">
+                    <option value="">해당 없음</option>
+                    <option value="소한이 한글">소한이 한글</option>
+                    <option value="요리수 연산">요리수 연산</option>
+                  </select>
+                </label>
+                <label>
+                  1개당 인정 메인교재
+                  <input id="bookMainUnitsPerItem" type="number" min="0" step="1" value="0" />
+                </label>
+                <label>
                   기본 매입가
                   <input id="bookPurchasePrice" type="number" min="0" step="1000" />
                 </label>
@@ -1179,7 +1206,7 @@
             </details>
 
             <details class="book-entry-panel">
-              <summary>교재 입고 / 사용 기록</summary>
+              <summary>교재 주문 / 입고 / 사용 기록</summary>
               <div class="book-form-grid">
                 <input id="bookStockRecordId" type="hidden" />
                 <label>
@@ -1193,6 +1220,7 @@
                 <label>
                   구분
                   <select id="bookStockType">
+                    <option value="order">주문(배송대기)</option>
                     <option value="in">입고</option>
                     <option value="out">사용</option>
                   </select>
@@ -1209,16 +1237,20 @@
                   거래처/학생
                   <input id="bookStockPartner" type="text" placeholder="예: 거래처명 또는 학생명" />
                 </label>
+                <label>
+                  주문번호
+                  <input id="bookStockOrderNumber" type="text" inputmode="numeric" placeholder="주문 건에 입력" />
+                </label>
                 <label class="wide check-line">
                   <input id="bookStockCreateExpense" type="checkbox" checked />
-                  입고 금액을 매출관리 지출에도 기록
+                  주문/입고 금액을 매출관리 지출에도 기록
                 </label>
                 <label class="wide">
                   메모
                   <textarea id="bookStockMemo" rows="2" placeholder="구입처, 지급 학생, 영수증 위치 등"></textarea>
                 </label>
                 <div class="finance-save-row wide">
-                  <button class="primary-button" id="saveBookStockBtn" type="button">입출고 저장</button>
+                  <button class="primary-button" id="saveBookStockBtn" type="button">주문/입출고 저장</button>
                   <button class="ghost-button" id="clearBookStockBtn" type="button">입력 비우기</button>
                 </div>
               </div>
@@ -1238,7 +1270,7 @@
                 <div class="panel-head compact-head">
                   <div>
                     <p class="eyebrow">최근 기록</p>
-                    <h3>입고 / 사용 내역</h3>
+                    <h3>주문 / 입고 / 사용 내역</h3>
                   </div>
                 </div>
                 <div class="management-list" id="bookStockHistory"></div>
