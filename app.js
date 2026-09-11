@@ -2535,6 +2535,15 @@ function renderRows() {
       if (gradeCompare !== 0) return gradeCompare;
     }
 
+    if (studentSortMode === "school") {
+      const schoolA = String(studentA.school || "").trim();
+      const schoolB = String(studentB.school || "").trim();
+      if (!schoolA && schoolB) return 1;
+      if (schoolA && !schoolB) return -1;
+      const schoolCompare = schoolA.localeCompare(schoolB, "ko-KR", { numeric: true, sensitivity: "base" });
+      if (schoolCompare !== 0) return schoolCompare;
+    }
+
     return nameCompare || String(studentA.school || "").localeCompare(String(studentB.school || ""), "ko-KR");
   });
 
@@ -2585,7 +2594,7 @@ function renderRows() {
 }
 
 function setStudentSort(mode) {
-  studentSortMode = mode === "grade" ? "grade" : "name";
+  studentSortMode = ["name", "grade", "school"].includes(mode) ? mode : "name";
   document.querySelectorAll("[data-student-sort]").forEach((button) => {
     const isActive = button.dataset.studentSort === studentSortMode;
     button.classList.toggle("active", isActive);
@@ -8297,7 +8306,6 @@ function bindEvents() {
   document.querySelectorAll("[data-student-sort]").forEach((button) => {
     button.addEventListener("click", () => setStudentSort(button.dataset.studentSort));
   });
-  $("studentFilterBtn")?.addEventListener("click", applyStudentFilters);
   $("searchInput")?.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
