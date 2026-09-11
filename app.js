@@ -2533,13 +2533,13 @@ function renderRows() {
         <span>${escapeHtml(student.school || "-")} · ${escapeHtml(student.parentPhone || "-")}</span>
       </td>
       <td>${escapeHtml(student.grade)}</td>
+      <td><span class="checkin-code">${escapeHtml(checkinCodeFromParentPhone(student.parentPhone) || "-")}</span></td>
       <td>
         <div class="pills">
           ${formatSubjectPills(student) || `<span class="small-text">-</span>`}
         </div>
       </td>
       <td>${escapeHtml(student.teacher || "-")}</td>
-      <td><span class="checkin-code">${escapeHtml(checkinCodeFromParentPhone(student.parentPhone) || "-")}</span></td>
       <td>
         <div class="row-actions">
           <button class="mini-button" type="button" data-action="edit" data-id="${student.id}">수정</button>

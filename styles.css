@@ -4542,7 +4542,8 @@ legend {
 
 /* Keep the full student roster visible on common laptop widths. */
 #studentsView .workspace {
-  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 0.65fr);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.38fr);
+  gap: 12px;
 }
 
 #studentsView .list-panel {
@@ -4550,7 +4551,7 @@ legend {
 }
 
 .student-table {
-  min-width: 620px;
+  min-width: 600px;
   table-layout: fixed;
   font-size: 13px;
 }
@@ -4560,12 +4561,12 @@ legend {
   padding: 9px 7px;
 }
 
-.student-table th:nth-child(1) { width: 24%; }
+.student-table th:nth-child(1) { width: 22%; }
 .student-table th:nth-child(2) { width: 7%; }
-.student-table th:nth-child(3) { width: 25%; }
-.student-table th:nth-child(4) { width: 15%; }
-.student-table th:nth-child(5) { width: 13%; }
-.student-table th:nth-child(6) { width: 16%; }
+.student-table th:nth-child(3) { width: 12%; }
+.student-table th:nth-child(4) { width: 27%; }
+.student-table th:nth-child(5) { width: 14%; }
+.student-table th:nth-child(6) { width: 18%; }
 
 .student-table .name-cell span {
   overflow-wrap: anywhere;
@@ -4590,6 +4591,49 @@ legend {
 .student-table .checkin-code {
   min-width: 42px;
   padding: 0 6px;
+}
+
+/* Give the roster more usable width without hiding student details. */
+@media (min-width: 1081px) {
+  .app-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: 18px 12px;
+  }
+
+  .sidebar-title {
+    grid-template-columns: 82px minmax(0, 1fr);
+    min-height: 82px;
+    padding: 0 2px 16px;
+    margin-bottom: 14px;
+  }
+
+  .sidebar-logo-mark {
+    width: 82px;
+    height: 66px;
+  }
+
+  .sidebar-title strong {
+    font-size: 18px;
+  }
+
+  .sidebar-title span {
+    font-size: 12px;
+  }
+
+  .side-nav {
+    gap: 6px;
+  }
+
+  .nav-folder {
+    gap: 4px;
+  }
+
+  #studentsView .detail-panel {
+    padding: 14px;
+  }
 }
 
 @media (max-width: 1080px) {
