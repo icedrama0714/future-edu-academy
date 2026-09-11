@@ -6319,7 +6319,7 @@ function renderBooksOverview() {
         .filter((record) => record.bookId === book.id)
         .map((record) => record.orderNumber)
         .join(" ");
-      const target = [book.subject, book.title, book.level, book.volume, book.publisher, book.franchiseProgram, book.memo, recordTarget].join(" ").toLowerCase();
+      const target = [book.subject, book.title, book.level, book.volume, book.publisher, book.franchiseProgram, recordTarget].join(" ").toLowerCase();
       return (!subject || book.subject === subject) && (!query || target.includes(query));
     })
     .sort((a, b) => bookDisplayName(a).localeCompare(bookDisplayName(b), "ko"));
