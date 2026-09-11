@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>미래엔 에듀 영수학원 관리</title>
-    <link rel="stylesheet" href="./styles.css?v=20260911-6" />
+    <link rel="stylesheet" href="./styles.css?v=20260911-7" />
   </head>
   <body>
     <div class="app-layout">
@@ -19,42 +19,46 @@
         <nav class="side-nav">
           <details class="nav-folder" open>
             <summary>학원운영</summary>
-            <button type="button" data-view="students">
-              <strong>학생관리</strong>
-            </button>
-            <button type="button" data-view="learning">
-              <strong>학습관리</strong>
-            </button>
-            <button type="button" data-view="attendance">
-              <strong>등원관리</strong>
-            </button>
-            <button type="button" data-view="checkin">
-              <strong>출석체크</strong>
-            </button>
+            <div class="nav-folder-items">
+              <button type="button" data-view="students">
+                <strong>학생관리</strong>
+              </button>
+              <button type="button" data-view="learning">
+                <strong>학습관리</strong>
+              </button>
+              <button type="button" data-view="attendance">
+                <strong>등원관리</strong>
+              </button>
+              <button type="button" data-view="checkin">
+                <strong>출석체크</strong>
+              </button>
+            </div>
           </details>
           <details class="nav-folder">
             <summary>관리/설정</summary>
-            <button type="button" data-view="payments">
-              <strong>납부관리</strong>
-            </button>
-            <button type="button" data-view="finance">
-              <strong>매출관리</strong>
-            </button>
-            <button type="button" data-view="tuition">
-              <strong>교육비 기준표</strong>
-            </button>
-            <button type="button" data-view="books">
-              <strong>교재관리</strong>
-            </button>
-            <button type="button" data-view="staff">
-              <strong>직원관리</strong>
-            </button>
-            <button type="button" data-view="kakao">
-              <strong>알림톡</strong>
-            </button>
-            <button type="button" data-view="archive">
-              <strong>자료보관</strong>
-            </button>
+            <div class="nav-folder-items">
+              <button type="button" data-view="payments">
+                <strong>납부관리</strong>
+              </button>
+              <button type="button" data-view="finance">
+                <strong>매출관리</strong>
+              </button>
+              <button type="button" data-view="tuition">
+                <strong>교육비 기준표</strong>
+              </button>
+              <button type="button" data-view="books">
+                <strong>교재관리</strong>
+              </button>
+              <button type="button" data-view="staff">
+                <strong>직원관리</strong>
+              </button>
+              <button type="button" data-view="kakao">
+                <strong>알림톡</strong>
+              </button>
+              <button type="button" data-view="archive">
+                <strong>자료보관</strong>
+              </button>
+            </div>
           </details>
         </nav>
       </aside>

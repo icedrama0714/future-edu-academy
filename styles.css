@@ -106,6 +106,11 @@ body {
   gap: 7px;
 }
 
+.nav-folder-items {
+  display: grid;
+  gap: 7px;
+}
+
 .nav-folder summary {
   display: flex;
   align-items: center;
@@ -138,7 +143,7 @@ body {
 }
 
 .nav-folder button {
-  margin-top: 7px;
+  margin-top: 0;
 }
 
 .nav-group {
@@ -4705,6 +4710,10 @@ legend {
 
   .nav-folder {
     grid-column: 1 / -1;
+    gap: 4px;
+  }
+
+  .nav-folder-items {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
   }
@@ -4737,6 +4746,10 @@ legend {
   .top-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
+  }
+
+  #currentUserChip {
+    display: none;
   }
 
   .role-control {
