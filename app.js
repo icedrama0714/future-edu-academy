@@ -6315,7 +6315,11 @@ function renderBooksOverview() {
   const query = ($("bookSearchInput")?.value || "").trim().toLowerCase();
   const filteredBooks = [...bookCatalog]
     .filter((book) => {
-      const target = [book.subject, book.title, book.level, book.volume, book.publisher, book.franchiseProgram, book.memo].join(" ").toLowerCase();
+      const recordTarget = bookStockRecords
+        .filter((record) => record.bookId === book.id)
+        .map((record) => [record.orderNumber, record.partner, record.memo].join(" "))
+        .join(" ");
+      const target = [book.subject, book.title, book.level, book.volume, book.publisher, book.franchiseProgram, book.memo, recordTarget].join(" ").toLowerCase();
       return (!subject || book.subject === subject) && (!query || target.includes(query));
     })
     .sort((a, b) => bookDisplayName(a).localeCompare(bookDisplayName(b), "ko"));
@@ -6324,6 +6328,11 @@ function renderBooksOverview() {
   $("bookCatalogCount").textContent = `${bookCatalog.length}종`;
   $("bookTotalStock").textContent = `${stockValues.reduce((sum, value) => sum + value, 0)}권`;
   $("bookLowStockCount").textContent = `${stockValues.filter((value) => value <= 2).length}종`;
+  if ($("bookFilterResultCount")) {
+    $("bookFilterResultCount").textContent = subject || query
+      ? `검색 결과 ${filteredBooks.length}종`
+      : `전체 ${bookCatalog.length}종`;
+  }
   renderFranchiseBookSummary();
 
   inventory.innerHTML = filteredBooks.length
@@ -8201,6 +8210,12 @@ function bindEvents() {
   $("bookStockType")?.addEventListener("change", () => updateBookStockUnitPrice(true));
   ["bookSubjectFilter", "bookSearchInput", "bookQuotaYear"].forEach((id) => {
     $(id)?.addEventListener("input", renderBooksOverview);
+  });
+  $("bookFilterBtn")?.addEventListener("click", renderBooksOverview);
+  $("bookSearchInput")?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    renderBooksOverview();
   });
   [
     "weeklySubjectSchedule",

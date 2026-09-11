@@ -2612,7 +2612,20 @@ h2 {
 }
 
 .book-tools {
-  grid-template-columns: minmax(160px, 0.25fr) minmax(260px, 1fr);
+  grid-template-columns: minmax(160px, 0.25fr) minmax(260px, 1fr) minmax(82px, auto);
+}
+
+.book-filter-button {
+  min-width: 82px;
+  align-self: end;
+}
+
+.book-filter-result {
+  min-height: 20px;
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .finance-entry-panel {
@@ -4524,4 +4537,5 @@ legend {
 @media (max-width: 900px) {
   .filters:has(#studentStatusFilter) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .student-filter-button { grid-column: 1 / -1; }
+  .book-filter-button { width: 100%; }
 }

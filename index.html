@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>미래엔 에듀 영수학원 관리</title>
-    <link rel="stylesheet" href="./styles.css?v=20260911-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260911-2" />
   </head>
   <body>
     <div class="app-layout">
@@ -1132,9 +1132,11 @@
               </label>
               <label>
                 검색
-                <input id="bookSearchInput" type="search" placeholder="교재명, 프랜차이즈, 주문번호 검색" />
+                <input id="bookSearchInput" type="search" placeholder="교재명, 단계, 권차, 프랜차이즈, 주문번호 검색" />
               </label>
+              <button class="primary-button book-filter-button" id="bookFilterBtn" type="button">조회</button>
             </div>
+            <p class="book-filter-result" id="bookFilterResultCount" aria-live="polite"></p>
 
             <section class="franchise-book-panel" aria-label="프랜차이즈 의무 메인교재 주문 현황">
               <div class="panel-head compact-head">
@@ -1607,7 +1609,7 @@
 
     <script src="./assets/payment-history-generated.js"></script>
     <script src="./withdrawal-records.js"></script>
-    <script src="./app.js?v=20260911-4"></script>
+    <script src="./app.js?v=20260911-5"></script>
     <script src="./dashboard-unpaid-link.js?v=20260907-1"></script>
     <script src="./withdrawal-integration.js"></script>
     <script src="./student-pause.js"></script>
