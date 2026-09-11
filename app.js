@@ -6393,7 +6393,7 @@ function readBookForm() {
   return normalizeBook({
     id: $("bookId").value || createId(),
     subject: $("bookSubject").value,
-    title: normalizeCourseText($("bookTitle").value).trim(),
+    title: $("bookTitle").value.trim(),
     level: $("bookLevel").value.trim(),
     volume: $("bookVolume").value.trim(),
     publisher: $("bookPublisher").value.trim(),
