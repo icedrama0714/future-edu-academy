@@ -4539,3 +4539,61 @@ legend {
   .student-filter-button { grid-column: 1 / -1; }
   .book-filter-button { width: 100%; }
 }
+
+/* Keep the full student roster visible on common laptop widths. */
+#studentsView .workspace {
+  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 0.65fr);
+}
+
+#studentsView .list-panel {
+  min-width: 0;
+}
+
+.student-table {
+  min-width: 620px;
+  table-layout: fixed;
+  font-size: 13px;
+}
+
+.student-table th,
+.student-table td {
+  padding: 9px 7px;
+}
+
+.student-table th:nth-child(1) { width: 24%; }
+.student-table th:nth-child(2) { width: 7%; }
+.student-table th:nth-child(3) { width: 25%; }
+.student-table th:nth-child(4) { width: 15%; }
+.student-table th:nth-child(5) { width: 13%; }
+.student-table th:nth-child(6) { width: 16%; }
+
+.student-table .name-cell span {
+  overflow-wrap: anywhere;
+}
+
+.student-table .pill {
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.student-table .row-actions {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+.student-table .row-actions button {
+  min-height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.student-table .checkin-code {
+  min-width: 42px;
+  padding: 0 6px;
+}
+
+@media (max-width: 1080px) {
+  #studentsView .workspace {
+    grid-template-columns: 1fr;
+  }
+}
