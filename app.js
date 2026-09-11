@@ -863,6 +863,7 @@ let checkinResultTone = "";
 let checkinAutoTimer = null;
 let studentListMode = "all";
 let studentSummaryGrade = "";
+let studentSortMode = "name";
 let feedbackPhotoData = "";
 let feedbackPhotoName = "";
 let activeView = "dashboard";
@@ -2522,7 +2523,6 @@ function formatSubjectPills(student) {
 function renderRows() {
   const tbody = $("studentRows");
   const filtered = getFilteredStudents();
-  const sortMode = $("studentSort")?.value || "name";
   const sorted = [...filtered].sort((studentA, studentB) => {
     const nameCompare = String(studentA.studentName || "").localeCompare(
       String(studentB.studentName || ""),
@@ -2530,7 +2530,7 @@ function renderRows() {
       { numeric: true, sensitivity: "base" },
     );
 
-    if (sortMode === "grade") {
+    if (studentSortMode === "grade") {
       const gradeCompare = gradeSortValue(studentA.grade) - gradeSortValue(studentB.grade);
       if (gradeCompare !== 0) return gradeCompare;
     }
@@ -2582,6 +2582,16 @@ function renderRows() {
       }
     });
   });
+}
+
+function setStudentSort(mode) {
+  studentSortMode = mode === "grade" ? "grade" : "name";
+  document.querySelectorAll("[data-student-sort]").forEach((button) => {
+    const isActive = button.dataset.studentSort === studentSortMode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+  renderRows();
 }
 
 function renderStats() {
@@ -8278,11 +8288,14 @@ function bindEvents() {
   document.querySelectorAll("[data-student-tab]").forEach((button) => {
     button.addEventListener("click", () => switchStudentTab(button.dataset.studentTab));
   });
-  ["searchInput", "gradeFilter", "subjectFilter", "studentStatusFilter", "studentSort"].forEach((id) => {
+  ["searchInput", "gradeFilter", "subjectFilter", "studentStatusFilter"].forEach((id) => {
     $(id).addEventListener("input", () => {
       studentSummaryGrade = "";
       renderRows();
     });
+  });
+  document.querySelectorAll("[data-student-sort]").forEach((button) => {
+    button.addEventListener("click", () => setStudentSort(button.dataset.studentSort));
   });
   $("studentFilterBtn")?.addEventListener("click", applyStudentFilters);
   $("searchInput")?.addEventListener("keydown", (event) => {

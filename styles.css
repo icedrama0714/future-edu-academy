@@ -4534,6 +4534,36 @@ legend {
 #pauseDialogError { color: var(--danger); }
 .filters:has(#studentStatusFilter) { grid-template-columns: minmax(160px, 1fr) repeat(4, minmax(92px, auto)) minmax(72px, auto); }
 .student-filter-button { min-width: 82px; }
+.student-sort-control {
+  display: inline-grid;
+  grid-template-columns: auto 1fr 1fr;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+}
+.student-sort-control > span {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.student-sort-option {
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.student-sort-option.active {
+  border-color: #c8dccf;
+  background: #eef7f1;
+  color: var(--accent-dark);
+  font-weight: 800;
+}
 @media (max-width: 900px) {
   .filters:has(#studentStatusFilter) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .student-filter-button { grid-column: 1 / -1; }
@@ -4639,5 +4669,89 @@ legend {
 @media (max-width: 1080px) {
   #studentsView .workspace {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    padding: 10px;
+  }
+
+  .sidebar-title {
+    grid-template-columns: 48px minmax(0, 1fr);
+    min-height: 48px;
+    margin-bottom: 6px;
+    padding: 0 0 8px;
+  }
+
+  .sidebar-logo-mark {
+    width: 48px;
+    height: 38px;
+  }
+
+  .sidebar-title strong {
+    font-size: 17px;
+  }
+
+  .sidebar-title span {
+    display: none;
+  }
+
+  .side-nav {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding-top: 0;
+  }
+
+  .nav-folder {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .nav-folder summary {
+    grid-column: 1 / -1;
+    min-height: 32px;
+    padding: 0 8px;
+  }
+
+  .nav-folder button {
+    min-height: 40px;
+    margin-top: 0;
+    padding: 0 2px;
+  }
+
+  .side-nav button strong {
+    font-size: 12px;
+  }
+
+  .app-shell {
+    padding-top: 10px;
+  }
+
+  .topbar {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .top-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .role-control {
+    grid-column: 1 / -1;
+  }
+
+  .role-control select {
+    flex: 1;
+  }
+
+  #studentsView .detail-panel {
+    order: 0;
+  }
+
+  .student-sort-control {
+    grid-column: 1 / -1;
   }
 }
