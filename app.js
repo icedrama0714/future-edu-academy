@@ -2373,6 +2373,7 @@ function getFilteredStudents() {
   const query = $("searchInput").value.trim().toLowerCase();
   const grade = $("gradeFilter").value;
   const subject = $("subjectFilter").value;
+  const enrollmentStatus = $("studentStatusFilter")?.value || "";
   const summaryGrade = studentSummaryGrade;
 
   return students.filter((student) => {
@@ -2403,7 +2404,8 @@ function getFilteredStudents() {
       (!query || searchTarget.includes(query)) &&
       (!summaryGrade || student.grade === summaryGrade) &&
       (!grade || student.grade === grade) &&
-      (!subject || student.subjects.includes(subject))
+      (!subject || student.subjects.includes(subject)) &&
+      (!enrollmentStatus || student.enrollmentStatus === enrollmentStatus)
     );
   });
 }
@@ -2520,13 +2522,28 @@ function formatSubjectPills(student) {
 function renderRows() {
   const tbody = $("studentRows");
   const filtered = getFilteredStudents();
+  const sortMode = $("studentSort")?.value || "name";
+  const sorted = [...filtered].sort((studentA, studentB) => {
+    const nameCompare = String(studentA.studentName || "").localeCompare(
+      String(studentB.studentName || ""),
+      "ko-KR",
+      { numeric: true, sensitivity: "base" },
+    );
 
-  if (filtered.length === 0) {
+    if (sortMode === "grade") {
+      const gradeCompare = gradeSortValue(studentA.grade) - gradeSortValue(studentB.grade);
+      if (gradeCompare !== 0) return gradeCompare;
+    }
+
+    return nameCompare || String(studentA.school || "").localeCompare(String(studentB.school || ""), "ko-KR");
+  });
+
+  if (sorted.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="empty-state">표시할 학생이 없습니다.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = filtered.map((student) => `
+  tbody.innerHTML = sorted.map((student) => `
     <tr class="${student.id === selectedId ? "selected" : ""}" data-id="${student.id}">
       <td class="name-cell">
         <strong>${escapeHtml(student.studentName || "이름 없음")}</strong>
@@ -3176,6 +3193,7 @@ function clearStudentListFilters() {
   $("searchInput").value = "";
   $("gradeFilter").value = "";
   $("subjectFilter").value = "";
+  if ($("studentStatusFilter")) $("studentStatusFilter").value = "";
 }
 
 function openActiveStudents() {
@@ -8260,7 +8278,7 @@ function bindEvents() {
   document.querySelectorAll("[data-student-tab]").forEach((button) => {
     button.addEventListener("click", () => switchStudentTab(button.dataset.studentTab));
   });
-  ["searchInput", "gradeFilter", "subjectFilter"].forEach((id) => {
+  ["searchInput", "gradeFilter", "subjectFilter", "studentStatusFilter", "studentSort"].forEach((id) => {
     $(id).addEventListener("input", () => {
       studentSummaryGrade = "";
       renderRows();

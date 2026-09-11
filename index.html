@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>미래엔 에듀 영수학원 관리</title>
-    <link rel="stylesheet" href="./styles.css?v=20260911-4" />
+    <link rel="stylesheet" href="./styles.css?v=20260911-5" />
   </head>
   <body>
     <div class="app-layout">
@@ -180,6 +180,10 @@
             </select>
             <select id="studentStatusFilter" aria-label="재원 상태 필터">
               <option value="">전체 상태</option><option>재원</option><option>휴원</option><option>대기</option>
+            </select>
+            <select id="studentSort" aria-label="학생 정렬 기준">
+              <option value="name">이름순</option>
+              <option value="grade">학년순</option>
             </select>
             <button class="primary-button student-filter-button" id="studentFilterBtn" type="button">조회</button>
           </div>
@@ -1609,7 +1613,7 @@
 
     <script src="./assets/payment-history-generated.js"></script>
     <script src="./withdrawal-records.js"></script>
-    <script src="./app.js?v=20260911-8"></script>
+    <script src="./app.js?v=20260911-9"></script>
     <script src="./dashboard-unpaid-link.js?v=20260907-1"></script>
     <script src="./withdrawal-integration.js"></script>
     <script src="./student-pause.js"></script>

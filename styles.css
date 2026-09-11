@@ -4532,7 +4532,7 @@ legend {
 .pause-dialog label { display: grid; gap: 6px; }
 .pause-dialog h2, .pause-dialog p { margin: 0; }
 #pauseDialogError { color: var(--danger); }
-.filters:has(#studentStatusFilter) { grid-template-columns: minmax(180px, 1fr) repeat(3, minmax(100px, auto)) minmax(82px, auto); }
+.filters:has(#studentStatusFilter) { grid-template-columns: minmax(160px, 1fr) repeat(4, minmax(92px, auto)) minmax(72px, auto); }
 .student-filter-button { min-width: 82px; }
 @media (max-width: 900px) {
   .filters:has(#studentStatusFilter) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
