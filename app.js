@@ -8208,7 +8208,6 @@ function bindEvents() {
     "feedbackUnit",
     "currentBooks",
     "completedBooks",
-    "bookTitle",
   ].forEach((id) => {
     $(id)?.addEventListener("blur", (event) => normalizeKoreanCourseInput(event.target));
   });
