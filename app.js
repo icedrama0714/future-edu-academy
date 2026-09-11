@@ -6317,7 +6317,7 @@ function renderBooksOverview() {
     .filter((book) => {
       const recordTarget = bookStockRecords
         .filter((record) => record.bookId === book.id)
-        .map((record) => [record.orderNumber, record.partner, record.memo].join(" "))
+        .map((record) => record.orderNumber)
         .join(" ");
       const target = [book.subject, book.title, book.level, book.volume, book.publisher, book.franchiseProgram, book.memo, recordTarget].join(" ").toLowerCase();
       return (!subject || book.subject === subject) && (!query || target.includes(query));
