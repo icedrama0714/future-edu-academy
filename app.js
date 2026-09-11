@@ -8218,7 +8218,7 @@ function bindEvents() {
   $("monthlyNewSubjectCard")?.addEventListener("click", openMonthlyNewSubjects);
   $("todayAbsentCard").addEventListener("click", openTodayAbsentAttendance);
   $("pausedStudentsCard").addEventListener("click", openPausedStudents);
-  $("waitingStudentsCard").addEventListener("click", openWaitingStudents);
+  $("waitingStudentsCard")?.addEventListener("click", openWaitingStudents);
   $("monthlyUnpaidCard").addEventListener("click", openCurrentMonthUnpaidPayments);
   $("monthlyRevenueButton").addEventListener("click", openCurrentMonthPaidPayments);
   $("todayAttendanceCard").addEventListener("click", openTodayScheduledAttendance);
