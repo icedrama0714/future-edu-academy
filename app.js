@@ -4757,6 +4757,12 @@ function savePaymentRecordInfo(recordId) {
   alert("수납기록을 수정했습니다.");
 }
 
+function applyStudentFilters() {
+  studentListMode = "all";
+  studentSummaryGrade = "";
+  renderRows();
+}
+
 function syncStudentLatestPayment(student) {
   const latest = [...(student.paymentRecords || [])]
     .sort((a, b) => (b.paymentDate || b.registered || "").localeCompare(a.paymentDate || a.registered || ""))[0];
@@ -8245,6 +8251,12 @@ function bindEvents() {
       studentSummaryGrade = "";
       renderRows();
     });
+  });
+  $("studentFilterBtn")?.addEventListener("click", applyStudentFilters);
+  $("searchInput")?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    applyStudentFilters();
   });
   ["paymentMonthFilter", "paymentStatusFilter", "paymentSearchInput"].forEach((id) => {
     $(id).addEventListener("input", renderPaymentOverview);
