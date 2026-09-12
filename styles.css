@@ -2657,6 +2657,205 @@ h2 {
   background: #fbfcfa;
 }
 
+.student-book-plan-panel {
+  border-color: #cfe2d4;
+  background: #f7fbf8;
+}
+
+.student-book-plan-help {
+  margin: 10px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.student-book-plan-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.student-book-plan-summary article {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+}
+
+.student-book-plan-summary span,
+.student-book-plan-summary strong {
+  display: block;
+}
+
+.student-book-plan-summary span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.student-book-plan-summary strong {
+  margin-top: 5px;
+  color: var(--accent-dark);
+  font-size: 19px;
+}
+
+.student-book-plan-summary .warning strong {
+  color: var(--danger);
+}
+
+.student-book-order-summary {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.student-book-order-summary > strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.student-book-order-summary > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.student-book-order-summary > div span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #fff0ef;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.student-book-order-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.student-book-plan-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.student-book-plan-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.student-book-plan-item {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.student-book-plan-item.need-order {
+  border-color: #e5b6b1;
+  background: #fff9f8;
+}
+
+.student-book-plan-item.progress {
+  border-color: #bfd3ea;
+  background: #f8fbff;
+}
+
+.student-book-plan-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.student-book-plan-head strong,
+.student-book-plan-head span {
+  display: block;
+}
+
+.student-book-plan-head span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.student-book-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 9px;
+  border-radius: 7px;
+  background: #f3f5f2;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.student-book-route b {
+  color: var(--accent);
+}
+
+.student-book-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.student-book-dates span {
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: #f3f5f2;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.student-book-dates span.urgent {
+  background: #fff0ef;
+  color: var(--danger);
+}
+
+.student-book-plan-item > p {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.student-book-next-status {
+  margin-top: 10px;
+}
+
+@media (max-width: 1080px) {
+  .student-book-plan-form,
+  .student-book-plan-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .student-book-plan-summary,
+  .student-book-plan-form,
+  .student-book-plan-list {
+    grid-template-columns: 1fr;
+  }
+
+  .student-book-plan-head {
+    flex-direction: column;
+  }
+}
+
 .fixed-expense-panel {
   margin: 0 0 14px;
   padding: 12px;

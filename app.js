@@ -8,6 +8,7 @@ const BOOK_FEE_RATES_KEY = "literacy_academy_book_fee_rates_v1";
 const BOOK_FEE_RATES_SEED_KEY = "literacy_academy_book_fee_rates_seed_v1";
 const BOOK_CATALOG_KEY = "literacy_academy_book_catalog_v1";
 const BOOK_STOCK_RECORDS_KEY = "literacy_academy_book_stock_records_v1";
+const STUDENT_BOOK_PLANS_KEY = "literacy_academy_student_book_plans_v1";
 const CHANGE_LOG_KEY = "literacy_academy_change_logs_v1";
 const CONSULTATION_RECORDS_KEY = "literacy_academy_consultation_records_v1";
 const USER_ACCOUNTS_KEY = "literacy_academy_user_accounts_v1";
@@ -846,6 +847,7 @@ let bookFeeRates = loadBookFeeRates();
 let financeSubjectFilter = { subject: "", type: "" };
 let bookCatalog = loadBookCatalog();
 let bookStockRecords = loadBookStockRecords();
+let studentBookPlans = loadStudentBookPlans();
 let changeLogs = loadChangeLogs();
 let consultationRecords = loadConsultationRecords();
 let userAccounts = loadUserAccounts();
@@ -2321,6 +2323,7 @@ function initOptions() {
   }
   if ($("courseHistoryDate")) $("courseHistoryDate").value = currentDateText();
   if ($("bookStockDate")) $("bookStockDate").value = currentDateText();
+  if ($("studentBookStartDate")) $("studentBookStartDate").value = currentDateText();
   if ($("bookQuotaYear")) $("bookQuotaYear").value = String(new Date().getFullYear());
   if ($("archiveMonthFilter")) $("archiveMonthFilter").value = currentMonthText();
   setLearningReportRange();
@@ -5355,6 +5358,7 @@ function allBackupPayload() {
     bookFeeRates,
     bookCatalog,
     bookStockRecords,
+    studentBookPlans,
     consultationRecords,
     userAccounts,
     kakaoSettings,
@@ -5390,6 +5394,7 @@ function importAllBackup(file) {
       bookFeeRates = Array.isArray(payload.bookFeeRates) ? payload.bookFeeRates.map(normalizeBookFeeRate) : [];
       bookCatalog = Array.isArray(payload.bookCatalog) ? payload.bookCatalog.map(normalizeBook) : [];
       bookStockRecords = Array.isArray(payload.bookStockRecords) ? payload.bookStockRecords.map(normalizeBookStockRecord) : [];
+      studentBookPlans = Array.isArray(payload.studentBookPlans) ? payload.studentBookPlans.map(normalizeStudentBookPlan) : [];
       consultationRecords = Array.isArray(payload.consultationRecords) ? payload.consultationRecords.map(normalizeConsultationRecord) : [];
       userAccounts = Array.isArray(payload.userAccounts) ? payload.userAccounts.map(normalizeUserAccount) : userAccounts;
       kakaoSettings = payload.kakaoSettings ? normalizeKakaoSettings(payload.kakaoSettings) : kakaoSettings;
@@ -5408,6 +5413,7 @@ function importAllBackup(file) {
       saveBookFeeRates();
       saveBookCatalog();
       saveBookStockRecords();
+      saveStudentBookPlans();
       saveConsultationRecords();
       saveUserAccounts();
       saveKakaoSettingsToStorage();
@@ -6576,6 +6582,210 @@ function deleteBookFeeRate(id) {
   clearBookFeeRateForm();
 }
 
+function normalizeStudentBookPlan(plan = {}) {
+  return {
+    id: plan.id || createId(),
+    studentId: String(plan.studentId || ""),
+    currentBook: String(plan.currentBook || "").trim(),
+    startDate: String(plan.startDate || ""),
+    durationWeeks: Math.max(1, Number(plan.durationWeeks || 8)),
+    nextBook: String(plan.nextBook || "").trim(),
+    status: ["사용중", "주문완료", "입고완료", "배부완료"].includes(plan.status) ? plan.status : "사용중",
+    memo: String(plan.memo || "").trim(),
+    updatedAt: String(plan.updatedAt || new Date().toISOString()),
+  };
+}
+
+function loadStudentBookPlans() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STUDENT_BOOK_PLANS_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed.map(normalizeStudentBookPlan) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStudentBookPlans() {
+  try {
+    localStorage.setItem(STUDENT_BOOK_PLANS_KEY, JSON.stringify(studentBookPlans));
+  } catch {
+    alert("학생별 교재 준비기록 저장 공간이 부족합니다. 전체 백업 후 오래된 자료를 정리해주세요.");
+  }
+}
+
+function studentBookPlanDate(startDate, offsetDays) {
+  const date = dateFromText(startDate);
+  if (!date) return "";
+  date.setDate(date.getDate() + Number(offsetDays || 0));
+  return formatDateText(date);
+}
+
+function studentBookPlanTiming(plan) {
+  const expectedEndDate = studentBookPlanDate(plan.startDate, Number(plan.durationWeeks || 8) * 7);
+  const orderByDate = studentBookPlanDate(expectedEndDate, -21);
+  const today = currentDateText();
+  return {
+    expectedEndDate,
+    orderByDate,
+    orderNeeded: plan.status === "사용중" && Boolean(orderByDate) && today >= orderByDate,
+    upcoming: plan.status === "사용중" && Boolean(orderByDate) && today < orderByDate,
+  };
+}
+
+function studentForBookPlan(plan) {
+  return students.find((student) => student.id === plan.studentId);
+}
+
+function syncStudentBookPlanOptions() {
+  const studentSelect = $("studentBookPlanStudent");
+  const catalog = $("studentBookCatalogOptions");
+  if (!studentSelect || !catalog) return;
+  const selectedStudent = studentSelect.value;
+  const roster = consultationStudents().filter((student) => student.enrollmentStatus === "재원");
+  studentSelect.innerHTML = `<option value="">학생 선택</option>${roster.map((student) => (
+    `<option value="${escapeHtml(student.id)}">${escapeHtml(student.studentName)} · ${escapeHtml(student.school || "-")} ${escapeHtml(student.grade || "")}</option>`
+  )).join("")}`;
+  if (roster.some((student) => student.id === selectedStudent)) studentSelect.value = selectedStudent;
+  const literacyBooks = [...bookCatalog]
+    .filter((book) => book.subject === "문해력")
+    .sort((bookA, bookB) => bookDisplayName(bookA).localeCompare(bookDisplayName(bookB), "ko"));
+  catalog.innerHTML = literacyBooks.map((book) => `<option value="${escapeHtml(bookDisplayName(book))}"></option>`).join("");
+}
+
+function clearStudentBookPlanForm() {
+  if (!$("studentBookPlanId")) return;
+  $("studentBookPlanId").value = "";
+  $("studentBookPlanStudent").value = "";
+  $("studentBookCurrentBook").value = "";
+  $("studentBookStartDate").value = currentDateText();
+  $("studentBookDurationWeeks").value = "8";
+  $("studentBookNextBook").value = "";
+  $("studentBookPlanStatus").value = "사용중";
+  $("studentBookPlanMemo").value = "";
+}
+
+function saveStudentBookPlan() {
+  const plan = normalizeStudentBookPlan({
+    id: $("studentBookPlanId").value || createId(),
+    studentId: $("studentBookPlanStudent").value,
+    currentBook: $("studentBookCurrentBook").value,
+    startDate: $("studentBookStartDate").value || currentDateText(),
+    durationWeeks: $("studentBookDurationWeeks").value,
+    nextBook: $("studentBookNextBook").value,
+    status: $("studentBookPlanStatus").value,
+    memo: $("studentBookPlanMemo").value,
+    updatedAt: new Date().toISOString(),
+  });
+  const student = studentForBookPlan(plan);
+  if (!student) {
+    alert("학생을 선택해주세요.");
+    return;
+  }
+  if (!plan.currentBook || !plan.nextBook) {
+    alert("현재 교재와 다음 교재를 입력해주세요.");
+    return;
+  }
+  const index = studentBookPlans.findIndex((item) => item.id === plan.id);
+  if (index >= 0) studentBookPlans[index] = plan;
+  else studentBookPlans.unshift(plan);
+  saveStudentBookPlans();
+  addChangeLog("교재관리", index >= 0 ? "학생 교재 준비 수정" : "학생 교재 준비 등록", `${student.studentName} · ${plan.currentBook} → ${plan.nextBook}`);
+  clearStudentBookPlanForm();
+  renderStudentBookPlans();
+}
+
+function editStudentBookPlan(id) {
+  const plan = studentBookPlans.find((item) => item.id === id);
+  if (!plan) return;
+  $("studentBookPlanId").value = plan.id;
+  $("studentBookPlanStudent").value = plan.studentId || "";
+  $("studentBookCurrentBook").value = plan.currentBook || "";
+  $("studentBookStartDate").value = plan.startDate || currentDateText();
+  $("studentBookDurationWeeks").value = String(plan.durationWeeks || 8);
+  $("studentBookNextBook").value = plan.nextBook || "";
+  $("studentBookPlanStatus").value = plan.status || "사용중";
+  $("studentBookPlanMemo").value = plan.memo || "";
+  $("studentBookCurrentBook").focus();
+}
+
+function deleteStudentBookPlan(id) {
+  const plan = studentBookPlans.find((item) => item.id === id);
+  const student = plan && studentForBookPlan(plan);
+  if (!plan || !confirm(`${student?.studentName || "선택한 학생"}의 교재 준비기록을 삭제할까요?`)) return;
+  studentBookPlans = studentBookPlans.filter((item) => item.id !== id);
+  saveStudentBookPlans();
+  addChangeLog("교재관리", "학생 교재 준비 삭제", `${student?.studentName || "학생"} · ${plan.currentBook}`);
+  if ($("studentBookPlanId").value === id) clearStudentBookPlanForm();
+  renderStudentBookPlans();
+}
+
+function advanceStudentBookPlan(id) {
+  const plan = studentBookPlans.find((item) => item.id === id);
+  if (!plan) return;
+  const statuses = ["사용중", "주문완료", "입고완료", "배부완료"];
+  const nextStatus = statuses[Math.min(statuses.length - 1, statuses.indexOf(plan.status) + 1)];
+  plan.status = nextStatus;
+  plan.updatedAt = new Date().toISOString();
+  saveStudentBookPlans();
+  addChangeLog("교재관리", "학생 교재 상태 변경", `${studentForBookPlan(plan)?.studentName || "학생"} · ${nextStatus}`);
+  renderStudentBookPlans();
+}
+
+function renderStudentBookPlans() {
+  const list = $("studentBookPlanList");
+  if (!list) return;
+  syncStudentBookPlanOptions();
+  const withTiming = studentBookPlans.map((plan) => ({ ...plan, timing: studentBookPlanTiming(plan) }));
+  const active = withTiming.filter((plan) => plan.status === "사용중");
+  const needsOrder = withTiming.filter((plan) => plan.timing.orderNeeded);
+  const waiting = withTiming.filter((plan) => ["주문완료", "입고완료"].includes(plan.status));
+  $("studentBookActiveCount").textContent = `${active.length}명`;
+  $("studentBookOrderNeededCount").textContent = `${needsOrder.length}명`;
+  $("studentBookWaitingCount").textContent = `${waiting.length}명`;
+
+  const groupedOrders = new Map();
+  needsOrder.forEach((plan) => groupedOrders.set(plan.nextBook, (groupedOrders.get(plan.nextBook) || 0) + 1));
+  $("studentBookOrderSummary").innerHTML = groupedOrders.size
+    ? `<strong>지금 주문할 교재</strong><div>${[...groupedOrders.entries()].map(([book, count]) => `<span>${escapeHtml(book)} <b>${count}권</b></span>`).join("")}</div>`
+    : `<span class="student-book-order-empty">현재 주문 시점이 지난 교재가 없습니다.</span>`;
+
+  const filter = $("studentBookPlanFilter")?.value || "";
+  const visible = withTiming
+    .filter((plan) => filter === "orderNeeded" ? plan.timing.orderNeeded : (!filter || plan.status === filter))
+    .sort((planA, planB) => `${planA.timing.orderByDate}|${studentForBookPlan(planA)?.studentName || ""}`.localeCompare(`${planB.timing.orderByDate}|${studentForBookPlan(planB)?.studentName || ""}`));
+  list.innerHTML = visible.length ? visible.map((plan) => {
+    const student = studentForBookPlan(plan);
+    const stateClass = plan.timing.orderNeeded ? "need-order" : plan.status === "사용중" ? "active" : "progress";
+    const nextAction = plan.status === "사용중" ? "주문완료 처리" : plan.status === "주문완료" ? "입고완료 처리" : plan.status === "입고완료" ? "배부완료 처리" : "";
+    return `
+      <article class="student-book-plan-item ${stateClass}">
+        <div class="student-book-plan-head">
+          <div>
+            <strong>${escapeHtml(student?.studentName || "삭제된 학생")}</strong>
+            <span>${escapeHtml(student?.school || "-")} ${escapeHtml(student?.grade || "")} · ${escapeHtml(plan.status)}</span>
+          </div>
+          <div class="row-actions">
+            <button class="mini-button" type="button" data-student-book-edit="${escapeHtml(plan.id)}">수정</button>
+            <button class="mini-danger-button" type="button" data-student-book-delete="${escapeHtml(plan.id)}">삭제</button>
+          </div>
+        </div>
+        <div class="student-book-route"><span>${escapeHtml(plan.currentBook)}</span><b>→</b><strong>${escapeHtml(plan.nextBook)}</strong></div>
+        <div class="student-book-dates">
+          <span>시작 ${escapeHtml(plan.startDate)}</span>
+          <span>종료 예상 ${escapeHtml(plan.timing.expectedEndDate || "-")}</span>
+          <span class="${plan.timing.orderNeeded ? "urgent" : ""}">주문 기준 ${escapeHtml(plan.timing.orderByDate || "-")}</span>
+        </div>
+        ${plan.memo ? `<p>${escapeHtml(plan.memo)}</p>` : ""}
+        ${nextAction ? `<button class="mini-button student-book-next-status" type="button" data-student-book-advance="${escapeHtml(plan.id)}">${nextAction}</button>` : ""}
+      </article>
+    `;
+  }).join("") : `<p class="empty-feedback">조건에 맞는 학생별 교재 준비기록이 없습니다.</p>`;
+
+  list.querySelectorAll("[data-student-book-edit]").forEach((button) => button.addEventListener("click", () => editStudentBookPlan(button.dataset.studentBookEdit)));
+  list.querySelectorAll("[data-student-book-delete]").forEach((button) => button.addEventListener("click", () => deleteStudentBookPlan(button.dataset.studentBookDelete)));
+  list.querySelectorAll("[data-student-book-advance]").forEach((button) => button.addEventListener("click", () => advanceStudentBookPlan(button.dataset.studentBookAdvance)));
+}
+
 function bookDisplayName(book = {}) {
   return [book.subject, book.title, book.level, book.volume].filter(Boolean).join(" · ") || "이름 없는 교재";
 }
@@ -6725,6 +6935,7 @@ function renderBooksOverview() {
   const inventory = $("bookInventory");
   const history = $("bookStockHistory");
   if (!inventory || !history) return;
+  renderStudentBookPlans();
 
   const subject = $("bookSubjectFilter")?.value || "";
   const query = ($("bookSearchInput")?.value || "").trim().toLowerCase();
@@ -8627,6 +8838,9 @@ function bindEvents() {
   $("clearBookFeeRateBtn")?.addEventListener("click", clearBookFeeRateForm);
   $("saveBookBtn")?.addEventListener("click", saveBook);
   $("clearBookBtn")?.addEventListener("click", clearBookForm);
+  $("saveStudentBookPlanBtn")?.addEventListener("click", saveStudentBookPlan);
+  $("clearStudentBookPlanBtn")?.addEventListener("click", clearStudentBookPlanForm);
+  $("studentBookPlanFilter")?.addEventListener("change", renderStudentBookPlans);
   $("saveBookStockBtn")?.addEventListener("click", saveBookStockRecord);
   $("clearBookStockBtn")?.addEventListener("click", clearBookStockForm);
   $("bookStockBook")?.addEventListener("change", () => updateBookStockUnitPrice(true));
