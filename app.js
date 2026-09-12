@@ -2306,6 +2306,7 @@ function initOptions() {
   if ($("staffMonthFilter")) $("staffMonthFilter").value = currentMonthText();
   if ($("kakaoMonthFilter")) $("kakaoMonthFilter").value = currentMonthText();
   if ($("financeMonthFilter")) $("financeMonthFilter").value = currentMonthText();
+  if ($("distributionMonth")) $("distributionMonth").value = currentMonthText();
   if ($("financeDate")) $("financeDate").value = currentDateText();
   if ($("tuitionEffectiveFrom")) $("tuitionEffectiveFrom").value = currentDateText();
   if ($("tuitionSubject")) $("tuitionSubject").innerHTML = SUBJECTS.map((subject) => `<option>${subject}</option>`).join("");
@@ -2648,6 +2649,102 @@ function getTodayOffStudents() {
 
 function getTodayWaitingStudents() {
   return getTodayScheduledStudents().filter((student) => !todayAttendanceRecord(student));
+}
+
+function distributionRosterStudents() {
+  if (typeof countedStudents === "function") return countedStudents();
+  const staffNames = new Set(["박지민", "박민진", "원지영", "박민영", "영어박지민", "한글박민진", "중등수학원지영", "원장박민영"]);
+  return students.filter((student) => {
+    if (["staff", "test"].includes(student.recordType)) return false;
+    const compactName = String(student.studentName || "").trim().toLowerCase().replace(/\s/g, "");
+    if (["test", "테스트"].includes(compactName)) return false;
+    return !staffNames.has(compactName);
+  });
+}
+
+function distributionStudentIsActiveOnDate(student, dateText) {
+  if (["휴원", "대기"].includes(student.enrollmentStatus)) return false;
+  if (student.enrollmentStatus === "퇴회" && !student.leaveDate) return false;
+  if (student.joinDate && dateText < student.joinDate) return false;
+  if (student.leaveDate && dateText > student.leaveDate) return false;
+  return true;
+}
+
+function classDistributionData(month) {
+  const [year, monthNumber] = String(month || "").split("-").map(Number);
+  if (!year || monthNumber < 1 || monthNumber > 12) return { rows: [], studentCount: 0, totalSessions: 0 };
+
+  const lastDate = new Date(year, monthNumber, 0).getDate();
+  const roster = distributionRosterStudents();
+  const includedStudentIds = new Set();
+  const rows = WEEKDAYS.map((weekday) => ({ ...weekday, occurrences: 0, total: 0, average: 0 }));
+  const rowsByDay = new Map(rows.map((row) => [row.value, row]));
+
+  for (let day = 1; day <= lastDate; day += 1) {
+    const date = new Date(year, monthNumber - 1, day);
+    const row = rowsByDay.get(date.getDay());
+    if (!row) continue;
+    const dateText = `${year}-${String(monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const scheduled = roster.filter((student) => (
+      distributionStudentIsActiveOnDate(student, dateText) &&
+      (student.attendanceDays || []).map(Number).includes(row.value)
+    ));
+    row.occurrences += 1;
+    row.total += scheduled.length;
+    scheduled.forEach((student) => includedStudentIds.add(student.id || student.studentName));
+  }
+
+  rows.forEach((row) => {
+    row.average = row.occurrences ? row.total / row.occurrences : 0;
+  });
+
+  return {
+    rows,
+    studentCount: includedStudentIds.size,
+    totalSessions: rows.reduce((sum, row) => sum + row.total, 0),
+  };
+}
+
+function formatDistributionAverage(value) {
+  return Number.isInteger(value) ? String(value) : Number(value || 0).toFixed(1);
+}
+
+function renderClassDistribution() {
+  const chart = $("distributionChart");
+  const summary = $("distributionSummary");
+  const monthInput = $("distributionMonth");
+  if (!chart || !summary || !monthInput) return;
+
+  const month = /^\d{4}-\d{2}$/.test(monthInput.value) ? monthInput.value : currentMonthText();
+  if (monthInput.value !== month) monthInput.value = month;
+  const data = classDistributionData(month);
+  const busiestAverage = Math.max(0, ...data.rows.map((row) => row.average));
+  const busiestRows = data.rows.filter((row) => row.average === busiestAverage && busiestAverage > 0);
+  const occupiedRows = data.rows.filter((row) => row.average > 0);
+  const quietestAverage = occupiedRows.length ? Math.min(...occupiedRows.map((row) => row.average)) : 0;
+  const quietestRows = occupiedRows.filter((row) => row.average === quietestAverage);
+  const busiestLabel = busiestRows.length ? `${busiestRows.map((row) => row.label).join("·")}요일` : "일정 없음";
+  const quietestLabel = quietestRows.length ? `${quietestRows.map((row) => row.label).join("·")}요일` : "일정 없음";
+
+  summary.innerHTML = `
+    <article><span>집계 학생</span><strong>${data.studentCount}명</strong><small>등원요일 등록 기준</small></article>
+    <article><span>월 예정 수업</span><strong>${data.totalSessions}건</strong><small>학생 1명·1회 기준</small></article>
+    <article class="busy"><span>가장 붐비는 요일</span><strong>${escapeHtml(busiestLabel)}</strong><small>${busiestAverage ? `하루 평균 ${formatDistributionAverage(busiestAverage)}명` : "등록된 일정이 없습니다"}</small></article>
+    <article class="quiet"><span>상담 추천 여유요일</span><strong>${escapeHtml(quietestLabel)}</strong><small>${quietestAverage ? `하루 평균 ${formatDistributionAverage(quietestAverage)}명` : "등록된 일정이 없습니다"}</small></article>
+  `;
+
+  const scale = busiestAverage || 1;
+  chart.innerHTML = data.rows.map((row) => {
+    const width = Math.round((row.average / scale) * 100);
+    const isBusiest = busiestRows.some((item) => item.value === row.value);
+    return `
+      <article class="distribution-row ${isBusiest ? "busiest" : ""}" aria-label="${row.label}요일 하루 평균 ${formatDistributionAverage(row.average)}명, 월 ${row.total}건">
+        <div class="distribution-day"><strong>${row.label}요일</strong><span>월 ${row.occurrences}일</span></div>
+        <div class="distribution-bar-track"><span class="distribution-bar" style="width:${width}%"></span></div>
+        <div class="distribution-metrics"><strong>평균 ${formatDistributionAverage(row.average)}명</strong><span>총 ${row.total}건</span></div>
+      </article>
+    `;
+  }).join("");
 }
 
 function isStudentScheduledOnDate(student, dateText) {
@@ -3074,6 +3171,7 @@ function renderAll() {
   renderTuitionRates();
   renderBookFeeRates();
   renderBooksOverview();
+  renderClassDistribution();
   renderAttendanceOverview();
   renderCheckinScreen();
   renderStaffManagement();
@@ -3133,6 +3231,7 @@ function switchView(view) {
     finance: "매출관리",
     tuition: "교육비 기준표",
     books: "교재관리",
+    distribution: "수업분포",
     attendance: "등원관리",
     checkin: "출석체크",
     staff: "직원관리",
@@ -3142,13 +3241,14 @@ function switchView(view) {
   $("pageTitle").textContent = titles[view] ?? "";
   if ($("newStudentBtn")) {
     $("newStudentBtn").textContent = view === "payments" ? "수납 학생 입력" : "학생 등록";
-    $("newStudentBtn").classList.toggle("hidden", view === "attendance" || view === "checkin" || view === "staff" || view === "kakao" || view === "finance" || view === "tuition" || view === "books" || view === "archive");
+    $("newStudentBtn").classList.toggle("hidden", view === "attendance" || view === "checkin" || view === "staff" || view === "kakao" || view === "finance" || view === "tuition" || view === "books" || view === "distribution" || view === "archive");
   }
   if (view === "checkin") {
     renderCheckinScreen();
     setTimeout(() => $("checkinCodeInput")?.focus(), 0);
   }
   if (view === "staff") renderStaffManagement();
+  if (view === "distribution") renderClassDistribution();
   if (view === "tuition") renderTuitionRates();
   if (view === "tuition") renderBookFeeRates();
   if (view === "kakao") renderKakaoSettings();
@@ -8214,6 +8314,7 @@ function bindEvents() {
   ["staffMonthFilter", "staffSearchInput"].forEach((id) => {
     $(id)?.addEventListener("input", renderStaffManagement);
   });
+  $("distributionMonth")?.addEventListener("input", renderClassDistribution);
   $("staffAccountList")?.addEventListener("click", (event) => {
     const editButton = event.target.closest("[data-staff-edit]");
     const deleteButton = event.target.closest("[data-staff-delete]");

@@ -4766,3 +4766,186 @@ legend {
     grid-column: 1 / -1;
   }
 }
+
+.distribution-panel {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.distribution-head {
+  align-items: flex-end;
+}
+
+.distribution-help,
+.distribution-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.distribution-month-control {
+  display: grid;
+  gap: 5px;
+  min-width: 170px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.distribution-month-control input {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.distribution-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.distribution-summary article {
+  min-height: 104px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+}
+
+.distribution-summary span,
+.distribution-summary small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.distribution-summary strong {
+  display: block;
+  margin: 9px 0 5px;
+  color: var(--ink);
+  font-size: 22px;
+}
+
+.distribution-summary .busy {
+  border-color: #c8dccf;
+  background: #eef7f1;
+}
+
+.distribution-summary .busy strong {
+  color: var(--accent-dark);
+}
+
+.distribution-summary .quiet {
+  background: #f7faf7;
+}
+
+.distribution-chart {
+  display: grid;
+  gap: 10px;
+}
+
+.distribution-row {
+  display: grid;
+  grid-template-columns: 80px minmax(180px, 1fr) 112px;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.distribution-row.busiest {
+  border-color: #a9cbb5;
+  box-shadow: 0 8px 22px rgba(47, 111, 78, 0.1);
+}
+
+.distribution-day strong,
+.distribution-day span,
+.distribution-metrics strong,
+.distribution-metrics span {
+  display: block;
+}
+
+.distribution-day strong,
+.distribution-metrics strong {
+  font-size: 14px;
+}
+
+.distribution-day span,
+.distribution-metrics span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.distribution-metrics {
+  text-align: right;
+}
+
+.distribution-bar-track {
+  height: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf1ec;
+}
+
+.distribution-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #89b596;
+  transition: width 180ms ease;
+}
+
+.distribution-row.busiest .distribution-bar {
+  background: var(--accent);
+}
+
+.distribution-note {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 760px) {
+  .distribution-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .distribution-month-control {
+    min-width: 0;
+  }
+
+  .distribution-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .distribution-summary article {
+    min-height: 96px;
+    padding: 12px;
+  }
+
+  .distribution-summary strong {
+    font-size: 18px;
+  }
+
+  .distribution-row {
+    grid-template-columns: 56px minmax(0, 1fr) 86px;
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .distribution-day strong,
+  .distribution-metrics strong {
+    font-size: 13px;
+  }
+}
