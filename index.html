@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>미래엔 에듀 영수학원 관리</title>
-    <link rel="stylesheet" href="./styles.css?v=20260912-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260912-2" />
   </head>
   <body>
     <div class="app-layout">
@@ -1385,14 +1385,26 @@
                 <h2>월별 수업분포</h2>
                 <p class="distribution-help">학생관리의 등원요일을 기준으로 요일별 예정 수업 인원을 집계합니다.</p>
               </div>
-              <label class="distribution-month-control">
-                기준 월
-                <input id="distributionMonth" type="month" />
-              </label>
+              <div class="distribution-controls">
+                <label class="distribution-filter-control">
+                  담당선생님
+                  <select id="distributionTeacher">
+                    <option value="">전체 담당선생님</option>
+                    <option value="원장">원장</option>
+                    <option value="영어선생님">영어선생님</option>
+                    <option value="중등수학선생님">중등수학선생님</option>
+                    <option value="한글선생님">한글선생님</option>
+                  </select>
+                </label>
+                <label class="distribution-filter-control">
+                  기준 월
+                  <input id="distributionMonth" type="month" />
+                </label>
+              </div>
             </div>
             <div class="distribution-summary" id="distributionSummary" aria-live="polite"></div>
             <div class="distribution-chart" id="distributionChart" aria-label="요일별 수업분포 차트"></div>
-            <p class="distribution-note">휴원·대기 학생과 테스트·직원 자료는 제외됩니다. 등원요일이 바뀌면 분포도도 바로 달라집니다.</p>
+            <p class="distribution-note">과목명이 달라도 학생관리의 담당선생님을 기준으로 묶습니다. 휴원·대기 학생과 테스트·직원 자료는 제외됩니다.</p>
           </section>
         </section>
 
@@ -1640,7 +1652,7 @@
 
     <script src="./assets/payment-history-generated.js"></script>
     <script src="./withdrawal-records.js"></script>
-    <script src="./app.js?v=20260912-1"></script>
+    <script src="./app.js?v=20260912-2"></script>
     <script src="./dashboard-unpaid-link.js?v=20260907-1"></script>
     <script src="./withdrawal-integration.js"></script>
     <script src="./student-pause.js"></script>

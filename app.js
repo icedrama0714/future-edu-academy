@@ -2670,14 +2670,23 @@ function distributionStudentIsActiveOnDate(student, dateText) {
   return true;
 }
 
-function classDistributionData(month) {
+function distributionTeacherName(student) {
+  const teacher = String(student?.teacher || "").trim();
+  return typeof normalizeResponsibleTeacher === "function"
+    ? normalizeResponsibleTeacher(teacher)
+    : teacher;
+}
+
+function classDistributionData(month, teacherFilter = "") {
   const [year, monthNumber] = String(month || "").split("-").map(Number);
   if (!year || monthNumber < 1 || monthNumber > 12) return { rows: [], studentCount: 0, totalSessions: 0 };
 
   const lastDate = new Date(year, monthNumber, 0).getDate();
-  const roster = distributionRosterStudents();
+  const roster = distributionRosterStudents().filter((student) => (
+    !teacherFilter || distributionTeacherName(student) === teacherFilter
+  ));
   const includedStudentIds = new Set();
-  const rows = WEEKDAYS.map((weekday) => ({ ...weekday, occurrences: 0, total: 0, average: 0 }));
+  const rows = WEEKDAYS.map((weekday) => ({ ...weekday, occurrences: 0, total: 0, average: 0, students: new Map() }));
   const rowsByDay = new Map(rows.map((row) => [row.value, row]));
 
   for (let day = 1; day <= lastDate; day += 1) {
@@ -2691,11 +2700,17 @@ function classDistributionData(month) {
     ));
     row.occurrences += 1;
     row.total += scheduled.length;
-    scheduled.forEach((student) => includedStudentIds.add(student.id || student.studentName));
+    scheduled.forEach((student) => {
+      const key = student.id || student.studentName;
+      includedStudentIds.add(key);
+      row.students.set(key, student.studentName || "이름 없음");
+    });
   }
 
   rows.forEach((row) => {
     row.average = row.occurrences ? row.total / row.occurrences : 0;
+    row.studentNames = Array.from(row.students.values()).sort((a, b) => a.localeCompare(b, "ko"));
+    delete row.students;
   });
 
   return {
@@ -2713,11 +2728,13 @@ function renderClassDistribution() {
   const chart = $("distributionChart");
   const summary = $("distributionSummary");
   const monthInput = $("distributionMonth");
-  if (!chart || !summary || !monthInput) return;
+  const teacherInput = $("distributionTeacher");
+  if (!chart || !summary || !monthInput || !teacherInput) return;
 
   const month = /^\d{4}-\d{2}$/.test(monthInput.value) ? monthInput.value : currentMonthText();
   if (monthInput.value !== month) monthInput.value = month;
-  const data = classDistributionData(month);
+  const teacherFilter = teacherInput.value;
+  const data = classDistributionData(month, teacherFilter);
   const busiestAverage = Math.max(0, ...data.rows.map((row) => row.average));
   const busiestRows = data.rows.filter((row) => row.average === busiestAverage && busiestAverage > 0);
   const occupiedRows = data.rows.filter((row) => row.average > 0);
@@ -2727,7 +2744,7 @@ function renderClassDistribution() {
   const quietestLabel = quietestRows.length ? `${quietestRows.map((row) => row.label).join("·")}요일` : "일정 없음";
 
   summary.innerHTML = `
-    <article><span>집계 학생</span><strong>${data.studentCount}명</strong><small>등원요일 등록 기준</small></article>
+    <article><span>집계 학생</span><strong>${data.studentCount}명</strong><small>${escapeHtml(teacherFilter || "전체 담당선생님")} · 등원요일 기준</small></article>
     <article><span>월 예정 수업</span><strong>${data.totalSessions}건</strong><small>학생 1명·1회 기준</small></article>
     <article class="busy"><span>가장 붐비는 요일</span><strong>${escapeHtml(busiestLabel)}</strong><small>${busiestAverage ? `하루 평균 ${formatDistributionAverage(busiestAverage)}명` : "등록된 일정이 없습니다"}</small></article>
     <article class="quiet"><span>상담 추천 여유요일</span><strong>${escapeHtml(quietestLabel)}</strong><small>${quietestAverage ? `하루 평균 ${formatDistributionAverage(quietestAverage)}명` : "등록된 일정이 없습니다"}</small></article>
@@ -2737,11 +2754,20 @@ function renderClassDistribution() {
   chart.innerHTML = data.rows.map((row) => {
     const width = Math.round((row.average / scale) * 100);
     const isBusiest = busiestRows.some((item) => item.value === row.value);
+    const studentNames = row.studentNames || [];
     return `
       <article class="distribution-row ${isBusiest ? "busiest" : ""}" aria-label="${row.label}요일 하루 평균 ${formatDistributionAverage(row.average)}명, 월 ${row.total}건">
         <div class="distribution-day"><strong>${row.label}요일</strong><span>월 ${row.occurrences}일</span></div>
         <div class="distribution-bar-track"><span class="distribution-bar" style="width:${width}%"></span></div>
         <div class="distribution-metrics"><strong>평균 ${formatDistributionAverage(row.average)}명</strong><span>총 ${row.total}건</span></div>
+        <details class="distribution-students" ${teacherFilter && studentNames.length ? "open" : ""}>
+          <summary>해당 요일 학생 ${studentNames.length}명 ${studentNames.length ? "보기" : ""}</summary>
+          <div class="distribution-student-names">
+            ${studentNames.length
+              ? studentNames.map((name) => `<span>${escapeHtml(name)}</span>`).join("")
+              : `<em>등록된 학생이 없습니다.</em>`}
+          </div>
+        </details>
       </article>
     `;
   }).join("");
@@ -8315,6 +8341,7 @@ function bindEvents() {
     $(id)?.addEventListener("input", renderStaffManagement);
   });
   $("distributionMonth")?.addEventListener("input", renderClassDistribution);
+  $("distributionTeacher")?.addEventListener("change", renderClassDistribution);
   $("staffAccountList")?.addEventListener("click", (event) => {
     const editButton = event.target.closest("[data-staff-edit]");
     const deleteButton = event.target.closest("[data-staff-delete]");

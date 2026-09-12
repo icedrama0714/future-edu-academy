@@ -4784,7 +4784,13 @@ legend {
   line-height: 1.5;
 }
 
-.distribution-month-control {
+.distribution-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.distribution-filter-control {
   display: grid;
   gap: 5px;
   min-width: 170px;
@@ -4793,7 +4799,8 @@ legend {
   font-weight: 700;
 }
 
-.distribution-month-control input {
+.distribution-filter-control input,
+.distribution-filter-control select {
   min-height: 40px;
   padding: 0 10px;
   border: 1px solid var(--line);
@@ -4909,6 +4916,42 @@ legend {
   background: var(--accent);
 }
 
+.distribution-students {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+
+.distribution-students summary {
+  width: fit-content;
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.distribution-student-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 9px;
+}
+
+.distribution-student-names span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #edf4ef;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.distribution-student-names em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
 .distribution-note {
   margin-top: 16px;
   padding-top: 12px;
@@ -4921,7 +4964,12 @@ legend {
     flex-direction: column;
   }
 
-  .distribution-month-control {
+  .distribution-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .distribution-filter-control {
     min-width: 0;
   }
 
