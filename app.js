@@ -6599,7 +6599,10 @@ function normalizeStudentBookPlan(plan = {}) {
 function loadStudentBookPlans() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STUDENT_BOOK_PLANS_KEY) || "[]");
-    return Array.isArray(parsed) ? parsed.map(normalizeStudentBookPlan) : [];
+    const records = Array.isArray(parsed) ? parsed.map(normalizeStudentBookPlan) : [];
+    const cleaned = records.filter((plan) => !(plan.currentBook === "테스트 현재교재" && plan.nextBook === "테스트 다음교재"));
+    if (cleaned.length !== records.length) localStorage.setItem(STUDENT_BOOK_PLANS_KEY, JSON.stringify(cleaned));
+    return cleaned;
   } catch {
     return [];
   }
