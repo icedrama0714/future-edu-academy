@@ -9,6 +9,7 @@ const BOOK_FEE_RATES_SEED_KEY = "literacy_academy_book_fee_rates_seed_v1";
 const BOOK_CATALOG_KEY = "literacy_academy_book_catalog_v1";
 const BOOK_STOCK_RECORDS_KEY = "literacy_academy_book_stock_records_v1";
 const CHANGE_LOG_KEY = "literacy_academy_change_logs_v1";
+const CONSULTATION_RECORDS_KEY = "literacy_academy_consultation_records_v1";
 const USER_ACCOUNTS_KEY = "literacy_academy_user_accounts_v1";
 const KAKAO_SETTINGS_KEY = "literacy_academy_kakao_settings_v1";
 const KAKAO_MESSAGE_LOGS_KEY = "literacy_academy_kakao_message_logs_v1";
@@ -846,6 +847,7 @@ let financeSubjectFilter = { subject: "", type: "" };
 let bookCatalog = loadBookCatalog();
 let bookStockRecords = loadBookStockRecords();
 let changeLogs = loadChangeLogs();
+let consultationRecords = loadConsultationRecords();
 let userAccounts = loadUserAccounts();
 let kakaoSettings = loadKakaoSettings();
 let kakaoMessageLogs = loadKakaoMessageLogs();
@@ -2307,6 +2309,7 @@ function initOptions() {
   if ($("kakaoMonthFilter")) $("kakaoMonthFilter").value = currentMonthText();
   if ($("financeMonthFilter")) $("financeMonthFilter").value = currentMonthText();
   if ($("distributionMonth")) $("distributionMonth").value = currentMonthText();
+  if ($("consultationDate")) $("consultationDate").value = currentDateText();
   if ($("financeDate")) $("financeDate").value = currentDateText();
   if ($("tuitionEffectiveFrom")) $("tuitionEffectiveFrom").value = currentDateText();
   if ($("tuitionSubject")) $("tuitionSubject").innerHTML = SUBJECTS.map((subject) => `<option>${subject}</option>`).join("");
@@ -2594,6 +2597,38 @@ function renderRows() {
   });
 }
 
+function normalizeConsultationRecord(record = {}) {
+  return {
+    id: record.id || createId(),
+    studentId: String(record.studentId || ""),
+    name: String(record.name || "").trim(),
+    contact: String(record.contact || "").trim(),
+    date: String(record.date || ""),
+    type: ["신규문의", "등록상담", "학습상담", "수납상담", "기타"].includes(record.type) ? record.type : "기타",
+    status: ["상담예정", "상담완료", "후속확인"].includes(record.status) ? record.status : "상담예정",
+    followUpDate: String(record.followUpDate || ""),
+    content: String(record.content || "").trim(),
+    updatedAt: String(record.updatedAt || new Date().toISOString()),
+  };
+}
+
+function loadConsultationRecords() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CONSULTATION_RECORDS_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed.map(normalizeConsultationRecord) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveConsultationRecords() {
+  try {
+    localStorage.setItem(CONSULTATION_RECORDS_KEY, JSON.stringify(consultationRecords));
+  } catch {
+    alert("상담기록 저장 공간이 부족합니다. 전체 백업 후 오래된 자료를 정리해주세요.");
+  }
+}
+
 function setStudentSort(mode) {
   studentSortMode = ["name", "grade", "school"].includes(mode) ? mode : "name";
   document.querySelectorAll("[data-student-sort]").forEach((button) => {
@@ -2649,6 +2684,177 @@ function getTodayOffStudents() {
 
 function getTodayWaitingStudents() {
   return getTodayScheduledStudents().filter((student) => !todayAttendanceRecord(student));
+}
+
+function consultationStudents() {
+  const staffNames = new Set(["test", "테스트", "박지민", "박민진", "원지영", "박민영"]);
+  return students
+    .filter((student) => !["staff", "test"].includes(student.recordType))
+    .filter((student) => !staffNames.has(String(student.studentName || "").trim()))
+    .sort((studentA, studentB) => String(studentA.studentName || "").localeCompare(String(studentB.studentName || ""), "ko"));
+}
+
+function syncConsultationStudentOptions() {
+  const editor = $("consultationStudent");
+  const filter = $("consultationFilterStudent");
+  if (!editor || !filter) return;
+  const editorValue = editor.value;
+  const filterValue = filter.value;
+  const roster = consultationStudents();
+  const linkedOptions = roster.map((student) => (
+    `<option value="${escapeHtml(student.id)}">${escapeHtml(student.studentName || "이름 없음")} · ${escapeHtml(student.school || "학교 미입력")} ${escapeHtml(student.grade || "")}</option>`
+  )).join("");
+  editor.innerHTML = `<option value="">신규·미등록 상담</option>${linkedOptions}`;
+  if (roster.some((student) => student.id === editorValue)) editor.value = editorValue;
+
+  const unlinkedNames = [...new Set(consultationRecords.filter((record) => !record.studentId).map((record) => record.name).filter(Boolean))]
+    .sort((nameA, nameB) => nameA.localeCompare(nameB, "ko"));
+  filter.innerHTML = [
+    `<option value="">전체 상담대상</option>`,
+    ...roster.map((student) => `<option value="student:${escapeHtml(student.id)}">${escapeHtml(student.studentName || "이름 없음")}</option>`),
+    ...unlinkedNames.map((name) => `<option value="name:${escapeHtml(name)}">신규 · ${escapeHtml(name)}</option>`),
+  ].join("");
+  if ([...filter.options].some((option) => option.value === filterValue)) filter.value = filterValue;
+}
+
+function resetConsultationForm() {
+  if (!$("consultationId")) return;
+  $("consultationId").value = "";
+  $("consultationStudent").value = "";
+  $("consultationName").value = "";
+  $("consultationContact").value = "";
+  $("consultationDate").value = currentDateText();
+  $("consultationType").value = "신규문의";
+  $("consultationStatus").value = "상담예정";
+  $("consultationFollowUpDate").value = "";
+  $("consultationContent").value = "";
+}
+
+function fillConsultationStudent() {
+  const student = students.find((item) => item.id === $("consultationStudent")?.value);
+  if (!student) return;
+  $("consultationName").value = student.studentName || "";
+  $("consultationContact").value = student.parentPhone || student.studentPhone || "";
+  if ($("consultationType").value === "신규문의") $("consultationType").value = "학습상담";
+}
+
+function saveConsultationRecord() {
+  const student = students.find((item) => item.id === $("consultationStudent")?.value);
+  const record = normalizeConsultationRecord({
+    id: $("consultationId").value || createId(),
+    studentId: student?.id || "",
+    name: $("consultationName").value || student?.studentName || "",
+    contact: $("consultationContact").value || student?.parentPhone || student?.studentPhone || "",
+    date: $("consultationDate").value || currentDateText(),
+    type: $("consultationType").value,
+    status: $("consultationStatus").value,
+    followUpDate: $("consultationFollowUpDate").value,
+    content: $("consultationContent").value,
+    updatedAt: new Date().toISOString(),
+  });
+  if (!record.name) {
+    alert("상담 대상 이름을 입력해주세요.");
+    return;
+  }
+  if (!record.content) {
+    alert("상담에 필요한 내용이나 상담한 내용을 입력해주세요.");
+    return;
+  }
+  const index = consultationRecords.findIndex((item) => item.id === record.id);
+  if (index >= 0) consultationRecords[index] = record;
+  else consultationRecords.unshift(record);
+  saveConsultationRecords();
+  addChangeLog("상담관리", index >= 0 ? "상담기록 수정" : "상담기록 등록", `${record.name} · ${record.date} · ${record.status}`);
+  resetConsultationForm();
+  renderConsultationManagement();
+}
+
+function editConsultationRecord(id) {
+  const record = consultationRecords.find((item) => item.id === id);
+  if (!record) return;
+  $("consultationId").value = record.id;
+  $("consultationStudent").value = record.studentId || "";
+  $("consultationName").value = record.name || "";
+  $("consultationContact").value = record.contact || "";
+  $("consultationDate").value = record.date || currentDateText();
+  $("consultationType").value = record.type || "기타";
+  $("consultationStatus").value = record.status || "상담예정";
+  $("consultationFollowUpDate").value = record.followUpDate || "";
+  $("consultationContent").value = record.content || "";
+  $("consultationName").focus();
+}
+
+function deleteConsultationRecord(id) {
+  const record = consultationRecords.find((item) => item.id === id);
+  if (!record || !confirm(`${record.name} 상담기록을 삭제할까요?`)) return;
+  consultationRecords = consultationRecords.filter((item) => item.id !== id);
+  saveConsultationRecords();
+  addChangeLog("상담관리", "상담기록 삭제", `${record.name} · ${record.date}`);
+  if ($("consultationId").value === id) resetConsultationForm();
+  renderConsultationManagement();
+}
+
+function consultationRecordMatchesFilter(record, filterValue) {
+  if (!filterValue) return true;
+  if (filterValue.startsWith("student:")) return record.studentId === filterValue.slice(8);
+  if (filterValue.startsWith("name:")) return !record.studentId && record.name === filterValue.slice(5);
+  return true;
+}
+
+function renderConsultationManagement() {
+  const list = $("consultationList");
+  if (!list) return;
+  syncConsultationStudentOptions();
+  const studentFilter = $("consultationFilterStudent")?.value || "";
+  const statusFilter = $("consultationFilterStatus")?.value || "";
+  const records = [...consultationRecords]
+    .filter((record) => consultationRecordMatchesFilter(record, studentFilter))
+    .filter((record) => !statusFilter || record.status === statusFilter)
+    .sort((recordA, recordB) => `${recordB.date}|${recordB.updatedAt}`.localeCompare(`${recordA.date}|${recordA.updatedAt}`));
+  const planned = records.filter((record) => record.status === "상담예정").length;
+  const followUp = records.filter((record) => record.status === "후속확인").length;
+  $("consultationSummary").textContent = `표시 ${records.length}건 · 상담예정 ${planned}건 · 후속확인 ${followUp}건`;
+
+  let legacyHtml = "";
+  if (studentFilter.startsWith("student:")) {
+    const student = students.find((item) => item.id === studentFilter.slice(8));
+    if (student?.counselingRecords?.trim()) {
+      legacyHtml = `<article class="consultation-item legacy"><div class="consultation-item-head"><div><strong>${escapeHtml(student.studentName)} 기존 상담메모</strong><span>학생 상세에 저장된 이전 기록</span></div></div><p>${escapeHtml(student.counselingRecords).replaceAll("\n", "<br>")}</p><button class="mini-button" type="button" data-open-learning="${escapeHtml(student.id)}">학생 학습관리 열기</button></article>`;
+    }
+  }
+
+  list.innerHTML = legacyHtml + (records.length ? records.map((record) => {
+    const student = students.find((item) => item.id === record.studentId);
+    return `
+      <article class="consultation-item">
+        <div class="consultation-item-head">
+          <div>
+            <strong>${escapeHtml(record.name || "이름 없음")}</strong>
+            <span>${escapeHtml(record.date || "날짜 없음")} · ${escapeHtml(record.type)} · <b class="consultation-status ${record.status === "상담완료" ? "done" : record.status === "후속확인" ? "follow" : "planned"}">${escapeHtml(record.status)}</b></span>
+          </div>
+          <div class="row-actions">
+            <button class="mini-button" type="button" data-consultation-edit="${escapeHtml(record.id)}">수정</button>
+            <button class="mini-danger-button" type="button" data-consultation-delete="${escapeHtml(record.id)}">삭제</button>
+          </div>
+        </div>
+        <div class="consultation-meta">
+          ${record.contact ? `<span>연락처 ${escapeHtml(record.contact)}</span>` : ""}
+          ${record.followUpDate ? `<span>후속 확인 ${escapeHtml(record.followUpDate)}</span>` : ""}
+          <span>${student ? `${escapeHtml(student.school || "-")} ${escapeHtml(student.grade || "")}` : "신규·미등록 상담"}</span>
+        </div>
+        <p>${escapeHtml(record.content).replaceAll("\n", "<br>")}</p>
+        ${student ? `<button class="mini-button" type="button" data-open-student="${escapeHtml(student.id)}">학생 상세 열기</button>` : ""}
+      </article>
+    `;
+  }).join("") : `<p class="empty-feedback">조건에 맞는 상담기록이 없습니다.</p>`);
+
+  list.querySelectorAll("[data-consultation-edit]").forEach((button) => {
+    button.addEventListener("click", () => editConsultationRecord(button.dataset.consultationEdit));
+  });
+  list.querySelectorAll("[data-consultation-delete]").forEach((button) => {
+    button.addEventListener("click", () => deleteConsultationRecord(button.dataset.consultationDelete));
+  });
+  bindOpenStudentButtons(list);
 }
 
 function distributionRosterStudents() {
@@ -3236,6 +3442,7 @@ function renderAll() {
   renderTuitionRates();
   renderBookFeeRates();
   renderBooksOverview();
+  renderConsultationManagement();
   renderClassDistribution();
   renderAttendanceOverview();
   renderCheckinScreen();
@@ -3296,7 +3503,7 @@ function switchView(view) {
     finance: "매출관리",
     tuition: "교육비 기준표",
     books: "교재관리",
-    distribution: "수업분포",
+    distribution: "상담관리",
     attendance: "등원관리",
     checkin: "출석체크",
     staff: "직원관리",
@@ -3313,7 +3520,10 @@ function switchView(view) {
     setTimeout(() => $("checkinCodeInput")?.focus(), 0);
   }
   if (view === "staff") renderStaffManagement();
-  if (view === "distribution") renderClassDistribution();
+  if (view === "distribution") {
+    renderConsultationManagement();
+    renderClassDistribution();
+  }
   if (view === "tuition") renderTuitionRates();
   if (view === "tuition") renderBookFeeRates();
   if (view === "kakao") renderKakaoSettings();
@@ -5145,6 +5355,7 @@ function allBackupPayload() {
     bookFeeRates,
     bookCatalog,
     bookStockRecords,
+    consultationRecords,
     userAccounts,
     kakaoSettings,
     kakaoMessageLogs,
@@ -5179,6 +5390,7 @@ function importAllBackup(file) {
       bookFeeRates = Array.isArray(payload.bookFeeRates) ? payload.bookFeeRates.map(normalizeBookFeeRate) : [];
       bookCatalog = Array.isArray(payload.bookCatalog) ? payload.bookCatalog.map(normalizeBook) : [];
       bookStockRecords = Array.isArray(payload.bookStockRecords) ? payload.bookStockRecords.map(normalizeBookStockRecord) : [];
+      consultationRecords = Array.isArray(payload.consultationRecords) ? payload.consultationRecords.map(normalizeConsultationRecord) : [];
       userAccounts = Array.isArray(payload.userAccounts) ? payload.userAccounts.map(normalizeUserAccount) : userAccounts;
       kakaoSettings = payload.kakaoSettings ? normalizeKakaoSettings(payload.kakaoSettings) : kakaoSettings;
       kakaoMessageLogs = Array.isArray(payload.kakaoMessageLogs) ? payload.kakaoMessageLogs.map(normalizeKakaoMessageLog) : kakaoMessageLogs;
@@ -5196,6 +5408,7 @@ function importAllBackup(file) {
       saveBookFeeRates();
       saveBookCatalog();
       saveBookStockRecords();
+      saveConsultationRecords();
       saveUserAccounts();
       saveKakaoSettingsToStorage();
       saveKakaoMessageLogs();
@@ -8381,6 +8594,12 @@ function bindEvents() {
   });
   $("distributionMonth")?.addEventListener("input", renderClassDistribution);
   $("distributionTeacher")?.addEventListener("change", renderClassDistribution);
+  $("consultationStudent")?.addEventListener("change", fillConsultationStudent);
+  $("saveConsultationBtn")?.addEventListener("click", saveConsultationRecord);
+  $("clearConsultationBtn")?.addEventListener("click", resetConsultationForm);
+  ["consultationFilterStudent", "consultationFilterStatus"].forEach((id) => {
+    $(id)?.addEventListener("change", renderConsultationManagement);
+  });
   $("staffAccountList")?.addEventListener("click", (event) => {
     const editButton = event.target.closest("[data-staff-edit]");
     const deleteButton = event.target.closest("[data-staff-delete]");
