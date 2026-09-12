@@ -2677,13 +2677,46 @@ function distributionTeacherName(student) {
     : teacher;
 }
 
+function distributionLatestPaymentText(student) {
+  const targetName = canonicalStudentName(student?.studentName);
+  if (!targetName || typeof allPaymentRecords !== "function") return "";
+  const latest = allPaymentRecords()
+    .filter((record) => canonicalStudentName(record.studentName) === targetName)
+    .sort((recordA, recordB) => {
+      const dateA = recordA.registered || recordA.paymentDate || recordA.paymentDueDate || "";
+      const dateB = recordB.registered || recordB.paymentDate || recordB.paymentDueDate || "";
+      return String(dateB).localeCompare(String(dateA));
+    })[0];
+  return latest ? `${latest.paymentName || ""} ${latest.memo || ""}` : "";
+}
+
+function distributionTeacherGroups(student) {
+  const knownTeachers = ["원장", "영어선생님", "중등수학선생님", "한글선생님"];
+  const assignedTeacher = distributionTeacherName(student);
+  if (knownTeachers.includes(assignedTeacher)) return [assignedTeacher];
+
+  const groups = new Set();
+  const subjects = (student?.subjects || []).map((subject) => String(subject || "").trim());
+  if (subjects.includes("미래엔 영어")) groups.add("영어선생님");
+  if (subjects.some((subject) => ["중등 수학", "고등 수학"].includes(subject))) groups.add("중등수학선생님");
+  if (subjects.some((subject) => ["국어+수학", "소한이 한글"].includes(subject))) groups.add("한글선생님");
+  if (subjects.some((subject) => ["미래엔 수학", "문해력", "공필왕"].includes(subject))) groups.add("원장");
+
+  const paymentText = distributionLatestPaymentText(student).replace(/\s+/g, " ");
+  if (/영어/.test(paymentText)) groups.add("영어선생님");
+  if (/(중등|고등)\s*수학/.test(paymentText)) groups.add("중등수학선생님");
+  if (/(소한이|요리수|한글|국어\s*\+\s*수학|국어수학|한글떼기|한글중심)/.test(paymentText)) groups.add("한글선생님");
+  if (/(문해력|책통|리딩하이|공필왕|미래엔\s*수학)/.test(paymentText)) groups.add("원장");
+  return Array.from(groups);
+}
+
 function classDistributionData(month, teacherFilter = "") {
   const [year, monthNumber] = String(month || "").split("-").map(Number);
   if (!year || monthNumber < 1 || monthNumber > 12) return { rows: [], studentCount: 0, totalSessions: 0 };
 
   const lastDate = new Date(year, monthNumber, 0).getDate();
   const roster = distributionRosterStudents().filter((student) => (
-    !teacherFilter || distributionTeacherName(student) === teacherFilter
+    !teacherFilter || distributionTeacherGroups(student).includes(teacherFilter)
   ));
   const includedStudentIds = new Set();
   const rows = WEEKDAYS.map((weekday) => ({ ...weekday, occurrences: 0, total: 0, average: 0, students: new Map() }));
