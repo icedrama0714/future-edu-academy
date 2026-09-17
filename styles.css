@@ -595,6 +595,38 @@ h2 {
   gap: 8px;
 }
 
+.movement-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0;
+}
+
+#movementView {
+  gap: 14px;
+}
+
+.movement-table {
+  min-width: 540px;
+}
+
+.movement-detail-table {
+  min-width: 780px;
+}
+
+.movement-table .movement-selected {
+  background: #f0f8f4;
+}
+
+.movement-empty {
+  color: var(--muted);
+  text-align: center;
+}
+
+.movement-detail-panel {
+  margin-top: 14px;
+}
+
 .archive-summary-card {
   min-height: 72px;
   padding: 10px;

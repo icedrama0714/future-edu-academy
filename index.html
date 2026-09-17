@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>미래엔 에듀 영수학원 관리</title>
-    <link rel="stylesheet" href="./styles.css?v=20260912-8" />
+    <link rel="stylesheet" href="./styles.css?v=20260917-1" />
   </head>
   <body>
     <div class="app-layout">
@@ -51,6 +51,9 @@
               </button>
               <button type="button" data-view="distribution">
                 <strong>상담관리</strong>
+              </button>
+              <button type="button" data-view="movement">
+                <strong>월별 원생변동</strong>
               </button>
               <button type="button" data-view="staff">
                 <strong>직원관리</strong>
@@ -1698,6 +1701,34 @@
           </section>
         </section>
 
+        <section class="view-section" id="movementView" data-view-section="movement" aria-label="월별 원생변동">
+          <section class="management-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">입회 · 퇴회 통계</p><h2>월별 신규·퇴회</h2></div>
+              <label>조회 연도 <select id="movementYear"></select></label>
+            </div>
+            <p class="archive-note">입회일과 퇴회일을 기준으로 집계합니다. 삭제된 퇴회 학생도 보관된 기록이 있으면 포함되며, 날짜가 없는 기록은 집계할 수 없습니다.</p>
+            <div class="movement-summary" id="movementSummary" aria-live="polite"></div>
+            <div class="table-wrap">
+              <table class="movement-table" aria-label="월별 신규와 퇴회 통계">
+                <thead><tr><th>월</th><th>신규</th><th>퇴회</th><th>순증감</th><th>상세</th></tr></thead>
+                <tbody id="movementMonthRows"></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="management-panel movement-detail-panel" aria-labelledby="movementDetailTitle">
+            <div class="panel-head"><div><p class="eyebrow">학생별 상세</p><h2 id="movementDetailTitle">월별 명단</h2></div><strong id="movementDetailCount"></strong></div>
+            <p class="archive-note">학년·과목·교육비는 현재 학생자료 또는 퇴회 시 보관한 기록입니다. 과거 해당 월의 학년·과목·교육비와 다를 수 있으며 실제 수납액을 뜻하지 않습니다.</p>
+            <div class="table-wrap">
+              <table class="movement-table movement-detail-table" aria-label="선택한 달의 신규 및 퇴회 학생 상세">
+                <thead><tr><th>구분</th><th>날짜</th><th>이름</th><th>학교</th><th>학년</th><th>수강과목</th><th>교육비</th></tr></thead>
+                <tbody id="movementDetailRows"></tbody>
+              </table>
+            </div>
+            <p id="movementStatus" class="archive-note" role="status"></p>
+          </section>
+        </section>
+
         <section class="view-section" id="archiveView" data-view-section="archive" aria-label="자료보관">
           <section class="archive-grid">
             <section class="management-panel archive-wide" aria-labelledby="withdrawalArchiveTitle">
@@ -1796,11 +1827,12 @@
 
     <script src="./assets/payment-history-generated.js"></script>
     <script src="./withdrawal-records.js"></script>
-    <script src="./app.js?v=20260912-9"></script>
+    <script src="./app.js?v=20260917-1"></script>
     <script src="./dashboard-unpaid-link.js?v=20260907-1"></script>
     <script src="./withdrawal-integration.js"></script>
     <script src="./student-pause.js"></script>
     <script src="./student-counts.js"></script>
+    <script src="./student-movement.js?v=20260917-1"></script>
     <script src="./student-visibility.js"></script>
     <script src="./teacher-dropdown.js?v=20260907-6"></script>
   </body>

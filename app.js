@@ -67,8 +67,8 @@ const DEFAULT_USER_ACCOUNTS = [
 
 const ROLE_VIEW_LIMITS = {
   director: [],
-  teacher: ["payments", "finance", "tuition", "books", "kakao", "archive"],
-  desk: ["finance", "tuition", "books", "kakao", "archive"],
+  teacher: ["payments", "finance", "tuition", "books", "kakao", "archive", "movement"],
+  desk: ["finance", "tuition", "books", "kakao", "archive", "movement"],
 };
 
 const DEFAULT_KAKAO_SETTINGS = {
@@ -3507,6 +3507,7 @@ function switchView(view) {
     tuition: "교육비 기준표",
     books: "교재관리",
     distribution: "상담관리",
+    movement: "월별 원생변동",
     attendance: "등원관리",
     checkin: "출석체크",
     staff: "직원관리",
@@ -3516,7 +3517,7 @@ function switchView(view) {
   $("pageTitle").textContent = titles[view] ?? "";
   if ($("newStudentBtn")) {
     $("newStudentBtn").textContent = view === "payments" ? "수납 학생 입력" : "학생 등록";
-    $("newStudentBtn").classList.toggle("hidden", view === "attendance" || view === "checkin" || view === "staff" || view === "kakao" || view === "finance" || view === "tuition" || view === "books" || view === "distribution" || view === "archive");
+    $("newStudentBtn").classList.toggle("hidden", view === "attendance" || view === "checkin" || view === "staff" || view === "kakao" || view === "finance" || view === "tuition" || view === "books" || view === "distribution" || view === "archive" || view === "movement");
   }
   if (view === "checkin") {
     renderCheckinScreen();
