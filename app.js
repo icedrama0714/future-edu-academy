@@ -8209,6 +8209,7 @@ function renderFeedbackList(student) {
       <div class="feedback-item-head">
         <strong>${escapeHtml(record.date || "날짜 없음")}</strong>
         <div class="row-actions">
+          <button class="mini-button" type="button" data-feedback-action="share" data-id="${record.id}">카카오톡 전달</button>
           <button class="mini-button" type="button" data-feedback-action="edit" data-id="${record.id}">수정</button>
           <button class="mini-danger-button" type="button" data-feedback-action="delete" data-id="${record.id}">삭제</button>
         </div>
@@ -8221,7 +8222,8 @@ function renderFeedbackList(student) {
 
   list.querySelectorAll("button[data-feedback-action]").forEach((button) => {
     button.addEventListener("click", () => {
-      if (button.dataset.feedbackAction === "edit") editFeedbackRecord(button.dataset.id);
+      if (button.dataset.feedbackAction === "share") window.openFeedbackShareDialog?.(button.dataset.id);
+      else if (button.dataset.feedbackAction === "edit") editFeedbackRecord(button.dataset.id);
       else deleteFeedbackRecord(button.dataset.id);
     });
   });
